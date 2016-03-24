@@ -134,8 +134,8 @@ namespace Emc.Documentum.Rest.Test
         private void getPreferences()
         {
             bool useFormLogging = false;
-			NameValueCollection testConfig = null;
-			try {
+            NameValueCollection testConfig = null;
+            try {
 				testConfig = ConfigurationManager.GetSection("restconfig") as NameValueCollection;
 			} catch(ConfigurationErrorsException se) {
 				Console.WriteLine("Configuration could  not load. If you are running under Visual Studio, ensure:\n" +
@@ -213,6 +213,100 @@ namespace Emc.Documentum.Rest.Test
             
         }
 
+        private List<AssignDocument> AssignDocs { get; set; }
+
+        private bool runTestByName(String testName)
+        {
+            bool success = false;
+            try
+            {
+                // Import all documents into the holding area (Instantiation Form) before the documents are assigned to parentFolder/child
+                WriteOutput("-----BEGIN " + testName + "--------------");
+                long tStart = DateTime.Now.Ticks;
+                switch(testName)
+                {
+                    case "CreateTempDocs":
+                        CreateTempDocs();
+                        WriteOutput("Created " + numDocs + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "AssignDocs":
+                        AssignToFolders();
+                        WriteOutput("Assigned " + AssignDocs.Count + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "CreateFromTemplate":
+                        // Create 10 documents by choosing from a random list of templates
+                        CreateFromTemplate();
+                        WriteOutput("Created 10 documents from template in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "MoveDocumentsToParent":
+                        // Randomly take some assigned documents and re-assign them (Move from a temp location to another location))
+                        reassignChildDocumentsToParent();
+                        WriteOutput("Assigned " + Math.Ceiling(AssignDocs.Count * .30) + " in " 
+                            + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+
+                    case "GetDocumentForView":
+                        // Take 30% of the documents, and download the content, optionally, will open each one for viewing
+                        for (int p = 0; p < (Math.Ceiling(AssignDocs.Count * .3)); p++)
+                        {
+                            ViewDocument(primaryContentDirectory, AssignDocs[p].DocumentId, openEachFile);
+                        }
+                        if (showdownloadedfiles) System.Diagnostics.Process.Start(primaryContentDirectory);
+                        WriteOutput("Re-Assigned " + Math.Ceiling(AssignDocs.Count * .30) + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "GetDocumentHistory":
+                        checkDocumentHistory();
+                        WriteOutput("Fetched RestDocument History of  " + Math.Ceiling(AssignDocs.Count * .10) 
+                            + " Documents in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "UploadRendition":
+                        CreateRendition(0, false);
+                        WriteOutput("Imported new Renditions of  " + Math.Ceiling(AssignDocs.Count * .30) 
+                            + " Documents in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "ViewRenditions":
+                        // This may be used to get the text version of the email for the correspondence view
+                        ViewRenditions(renditionsDirectory, IDsWithRenditions, openEachFile);
+                        // Open a directory with the downloaded renditions to show the tester
+                        if (showdownloadedfiles) System.Diagnostics.Process.Start(renditionsDirectory);
+                        WriteOutput("Downloaded renditions of  " + Math.Ceiling(AssignDocs.Count * .30) + " Documents for view in " 
+                            + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "ImportAsNewVersion":
+                        ImportAsNewVersion();
+                        WriteOutput("New Versions of  " + Math.Ceiling(AssignDocs.Count * .20) + " Documents for created in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "ReturnListOfDocuments":
+                        ReturnListOfDocuments();
+                        WriteOutput("List of Documents for 5 childFolderDocs returned in "
+                            + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+                        break;
+                    case "Search":
+                        // This test does its own timing output
+                        SearchForDocuments();
+                        break;
+                    case "ExportParent":
+                        ExportParent();
+                        break;
+                    case "ExportListOfFiles":
+                        ExportFiles();
+                        break;
+                    default:
+                        WriteOutput("Invalid test name: [" + testName + "] ");
+                        return false;
+                }
+                WriteOutput("-----FINISHED " + testName + "--------------");
+                success = true;
+            }
+            catch (Exception e)
+            {
+                WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
+            }
+            return success;
+        }
+
+        private List<String> IDsWithRenditions { get; set; }
+        private Repository CurrentRepository { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -223,7 +317,6 @@ namespace Emc.Documentum.Rest.Test
                 long testStart = DateTime.Now.Ticks;
                 long tStart = DateTime.Now.Ticks;
                 List<AssignDocument> assignDocs = null;
-                List<string> idsWithRenditions = null;
 
                 RestService home = client.Get<RestService>(RestHomeUri, null);
                 if (home == null)
@@ -233,269 +326,95 @@ namespace Emc.Documentum.Rest.Test
                 }
                 home.SetClient(client);
                 WriteOutput("Took " + ((DateTime.Now.Ticks - testStart)/TimeSpan.TicksPerMillisecond) + "ms to get RestService");
-                //Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
-                //Repository repository = repositories.GetRepository(repositoryName);
-                Repository repository = home.GetRepository(repositoryName);
-                ProductInfo productInfo = home.GetProductInfo();
-            if (repository == null) throw new Exception("Unable to login to the repository, please see server logs for more details.");
+            //Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
+            //Repository CurrentRepository = repositories.GetRepository(repositoryName);
+            CurrentRepository = home.GetRepository(repositoryName);
+            ProductInfo productInfo = home.GetProductInfo();
+            if (CurrentRepository == null) throw new Exception("Unable to login to the CurrentRepository, please see server logs for more details.");
+            // Set our default folder and document types. 
+            CurrentRepository.DocumentType = "dm_document";
+            CurrentRepository.FolderType = "dm_folder";
+            NameValueCollection restTests = ConfigurationManager.GetSection("resttests") as NameValueCollection;
+            if (!(Boolean.Parse(restTests["CreateTempDocs"].ToString()) || Boolean.Parse(restTests["CreateTempDocs"].ToString())))
+            {
+                throw new System.Exception("On of the tests that create Documents is required for other tests to run. "
+                    + "You must enable either the CreateTempDocs test and/or the CreateTempDocs test in order to create "
+                    + "documents that can be used in subsequent tests.");
+            }
 
+            AssignDocs = new List<AssignDocument>();
+            foreach (String key in restTests)
+            {
+                bool preCheckOk = true;
+                // This test is not available in versions earlier than 7.2
+                double restVersion = Double.Parse((productInfo.Properties.Major.Equals("NA") ? "7.2" : productInfo.Properties.Major));
 
-                // Set our default folder and document types. 
-                repository.DocumentType = "dm_document";
-                repository.FolderType = "dm_folder";
-                string testName = "";
-                try {
-                    // Import all documents into the holding area (Instantiation Form) before the documents are assigned to parentFolder/child
-                    testName = "CreateTempDocs";
-                    WriteOutput("-----BEGIN " + testName + "--------------");
-                    tStart = DateTime.Now.Ticks;
-                    assignDocs = CreateTempDocs(repository);
-                    WriteOutput("Created " + numDocs + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----FINISHED " + testName + "--------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try {
-                    // Assign Documents to parentFolder/childFolderDocs
-                    // When AssignDocs completes, the AssignDocument list will contain the new ObjectIds of each document 
-                    // that was assigned to the parentFolder
-                    testName = "AssignDocs";
-                    WriteOutput("-----BEGIN " + testName + "-------------------------");
-                    tStart = DateTime.Now.Ticks;
-                    AssignToFolders(repository, assignDocs);
-                    WriteOutput("Assigned " + assignDocs.Count + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "---------------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "CreateFromTemplate";
-                    WriteOutput("-----BEGIN " + testName + "-----------");
-                    tStart = DateTime.Now.Ticks;
-                    CreateFromTemplate(repository, assignDocs);
-                    WriteOutput("Created 10 documents from template in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "-----------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "MoveDocumentsToParent (Move documents)";
-                    WriteOutput("-----BEGIN " + testName + "------------");
-                    tStart = DateTime.Now.Ticks;
-                    // Randomly take some assigned documents and re-assign them (Move from a temp location to another location))
-                    reassignChildDocumentsToParent(repository, assignDocs);
-                    WriteOutput("Assigned " + Math.Ceiling(assignDocs.Count * .30) + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "--------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "GetDocumentForView";
-                    WriteOutput("-----BEGIN " + testName + "-----------------");
-                    tStart = DateTime.Now.Ticks;
-                    for (int p = 0; p < (Math.Ceiling(assignDocs.Count * .3)); p++)
+                if (key.Equals("Search")) {
+                    if (!(restVersion >= 7.2d))
                     {
-                        ViewDocument(repository, primaryContentDirectory, assignDocs[p].DocumentId, openEachFile);
-                    }
-                    if (showdownloadedfiles) System.Diagnostics.Process.Start(primaryContentDirectory);
-                    WriteOutput("Re-Assigned " + Math.Ceiling(assignDocs.Count * .30) + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "-------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "GetDocumentHistory";
-                    WriteOutput("-----BEGIN " + testName + "-----------------");
-                    tStart = DateTime.Now.Ticks;
-                    checkDocumentHistory(repository, assignDocs);
-                    WriteOutput("Fetched RestDocument History of  " + Math.Ceiling(assignDocs.Count * .10) + " Documents in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "-------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "CreateRendition";
-                    WriteOutput("-----BEGIN " + testName + "--------------------");
-                    tStart = DateTime.Now.Ticks;
-                    idsWithRenditions = CreateRendition(repository, assignDocs, 0, false);
-                    WriteOutput("Imported new Renditions of  " + Math.Ceiling(assignDocs.Count * .30) + " Documents in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "----------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "ViewRenditions";
-                    WriteOutput("-----BEGIN " + testName + "--------------------");
-                    tStart = DateTime.Now.Ticks;
-                    // This may be used to get the text version of the email for the correspondence view
-                    ViewRenditions(repository, renditionsDirectory, idsWithRenditions, openEachFile);
-                    // Open a directory with the downloaded renditions to show the tester
-                    if (showdownloadedfiles) System.Diagnostics.Process.Start(renditionsDirectory);
-                    WriteOutput("Renditions of  " + Math.Ceiling(assignDocs.Count * .30) + " Documents for view in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "----------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "ImportAsNewVersion";
-                    WriteOutput("-----BEGIN " + testName + "----------------");
-                    tStart = DateTime.Now.Ticks;
-                    ImportAsNewVersion(repository, assignDocs);
-                    WriteOutput("New Versions of  " + Math.Ceiling(assignDocs.Count * .20) + " Documents for created in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-
-                try
-                {
-                    testName = "ReturnListOfDocuments";
-                    WriteOutput("-----BEGIN " + testName + "----------------");
-                    tStart = DateTime.Now.Ticks;
-                    ReturnListOfDocuments(repository, assignDocs);
-                    WriteOutput("List of Documents for 5 childFolderDocs returned in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-                    WriteOutput("-----END " + testName + "------------------");
-                }
-                catch (Exception e)
-                {
-                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-                }
-            /**
-             * The below items were enablements in DCTM-Rest to handle email import like WDK does (split email from attachments)
-             * and a record management function to allow setting a event condition date. They are not in standard Rest Services
-             */
-            //                try
-            //                {
-            //                    testName = "ImportEmail";
-            //                    WriteOutput("-----BEGIN " + testName + "----------------");
-            //                    tStart = DateTime.Now.Ticks;
-            //                    float pctTest = 1.0F;
-            //                    ImportEmail(repository, pctTest);
-            //                    WriteOutput("Imported " + (Math.Ceiling(
-            //                        (new DirectoryInfo(randomEmailsDirectory).GetFiles().Count()) * pctTest))
-            //                        + " emails in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-            //                    WriteOutput("-----END " + testName + "------------------");
-            //                }
-            //                catch (Exception e)
-            //                {
-            //                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-            //                }
-            //
-            //                try
-            //                {
-            //                    testName = "Close Parent or Child";
-            //                    WriteOutput("-----BEGIN " + testName + "----------------");
-            //                    tStart = DateTime.Now.Ticks;
-            //                    CloseSupportingDocThenParent(repository);
-            //                    WriteOutput("Closed " + childList.Count + " parentFolders/childFolderDocs in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-            //                    WriteOutput("-----END " + testName + "------------------");
-            //                }
-            //                catch (Exception e)
-            //                {
-            //                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-            //                }
-
-            //                try
-            //                {
-            //                    testName = "Re-Open Parent or Child";
-            //                    WriteOutput("-----BEGIN " + testName + "----------------");
-            //                    tStart = DateTime.Now.Ticks;
-            //                    ReOpenParentOrChild(repository);
-            //                    WriteOutput("Closed " + childList.Count + " parentFolders/childFolderDocs in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
-            //                    WriteOutput("-----END " + testName + "------------------");
-            //                }
-            //                catch (Exception e)
-            //                {
-            //                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-            //                }
-            double restVersion = Double.Parse( (productInfo.Properties.Major.Equals("NA")? "7.2" : productInfo.Properties.Major));
-			if (restVersion >= 7.2d) {
-				try {
-					testName = "SEARCH";
-					WriteOutput ("---------------BEGIN " + testName + " ----------------------");
-					SearchForDocuments (repository);
-					WriteOutput ("-----------------END " + testName + " ----------------------");
-				} catch (Exception e) {
-					WriteOutput ("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString ());
-				}
-			}
-				// These features do not work on Mono yet, should be fine when .NetCore is released though
-			if(Type.GetType ("Mono.Runtime") == null) {
-	                try
-	                {
-	                    testName = "ExportParent";
-	                    WriteOutput("---------------BEGIN " + testName + " ------------------");
-	                    ExportParent(repository);
-	                    WriteOutput("-----------------END " + testName + " ------------------");
-	                }
-	                catch (Exception e)
-	                {
-	                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-	                }
-
-	                try
-	                {
-	                    testName = "ExportListOfFiles";
-	                    WriteOutput("---------------BEGIN " + testName + " ------------------");
-	                    ExportFiles(repository);
-	                    WriteOutput("-----------------END " + testName + " ------------------");
-	                }
-	                catch (Exception e)
-	                {
-	                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
-	                }
-			} // END IF (Mono) exclusion
-                WriteOutput("#####################################");
-                WriteOutput("COMPLETED TESTS IN: " + ((DateTime.Now.Ticks - testStart) / TimeSpan.TicksPerMillisecond) / 1000 / 60 + "minutes");
-                WriteOutput("#####################################");
-                System.Diagnostics.Process.Start(testDirectory);
-
-                if (loggerForm != null)
-                {
-                    while (loggerForm.Visible)
-                    {
-                        Application.DoEvents();
+                        preCheckOk = false;
+                        Console.WriteLine("Documentum Rest Version 7.2 or higher is required to use Search, your version is: " 
+                            + restVersion + " Skipping...");
                     }
                 }
+
+                // These features do not work on Mono yet, should be fine when .NetCore is released though
+                if(key.Equals("ExportParent") || key.Equals("ExportListOfFiles"))
+                {
+                    if (Type.GetType("Mono.Runtime") != null)
+                    {
+                        preCheckOk = false;
+                        Console.WriteLine("The zip libraries required for [" + key + " ] have failed under Mono, skipping this  test. If you "
+                            + "want to test for yourself, you will have to modify the source to allow it udner (UseCaseTests");
+                    }
+                }
+                
+                if(preCheckOk)
+                {
+                    if (Boolean.Parse(restTests[key].ToString())) runTestByName(key);
+                }
+                
+            }
+
+            //if (Boolean.Parse(restTests["CreateTempDocs"].ToString()))
+            //{
+            //    runTestByName(CurrentRepository, assignDocs, "CreateTempDocs");
+            //    runTestByName(CurrentRepository, assignDocs, "AssignDocs");
+            //}
+
+            //if (Boolean.Parse(restTests["CreateTempDocs"].ToString())) runTestByName(CurrentRepository, assignDocs, "CreateFromTemplate");
+            
+
+            //if (Boolean.Parse(restTests["MoveDocumentsToParent"].ToString())) runTestByName(CurrentRepository, assignDocs, "MoveDocumentsToParent");
+            //if (Boolean.Parse(restTests["GetDocumentForView"].ToString())) runTestByName(CurrentRepository, assignDocs, "GetDocumentForView");
+            //if (Boolean.Parse(restTests["GetDocumentHistory"].ToString())) runTestByName(CurrentRepository, assignDocs, "GetDocumentHistory");
+            //if (Boolean.Parse(restTests["UploadRendition"].ToString())) runTestByName(CurrentRepository, assignDocs, "UploadRendition");
+            //if (Boolean.Parse(restTests["ViewRenditions"].ToString())) runTestByName(CurrentRepository, assignDocs, "ViewRenditions");
+            //if (Boolean.Parse(restTests["ImportAsNewVersion"].ToString())) runTestByName(CurrentRepository, assignDocs, "ImportAsNewVersion");
+            //if (Boolean.Parse(restTests["ReturnListOfDocuments"].ToString())) runTestByName(CurrentRepository, assignDocs, "ReturnListOfDocuments");
+
+            
+
+            
+
+            WriteOutput("#####################################");
+            WriteOutput("COMPLETED TESTS IN: " + ((DateTime.Now.Ticks - testStart) / TimeSpan.TicksPerMillisecond) / 1000 / 60 + "minutes");
+            WriteOutput("#####################################");
+            System.Diagnostics.Process.Start(testDirectory);
+
+            if (loggerForm != null)
+            {
+                while (loggerForm.Visible)
+                {
+                    Application.DoEvents();
+                }
+            }
         }
 
-        private void ExportFiles(Repository repository)
+        private void ExportFiles()
         {
             FeedGetOptions options = new FeedGetOptions { ItemsPerPage = 10 };
-            Feed<RestDocument> feedDocs = repository.ExecuteDQL<RestDocument>("select r_object_id from dm_document where folder('" + ProcessBasePath + parentFolderId + "', DESCEND)", options);
+            Feed<RestDocument> feedDocs = CurrentRepository.ExecuteDQL<RestDocument>("select r_object_id from dm_document where folder('" + ProcessBasePath + parentFolderId + "', DESCEND)", options);
             List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(feedDocs, true);
             StringBuilder ids = new StringBuilder();
             int pass = 0;
@@ -510,22 +429,22 @@ namespace Emc.Documentum.Rest.Test
                 }
             }
             WriteOutput("[ExportFilesToZip] - Export list of files completed and stored: " + testDirectory + Path.DirectorySeparatorChar + "RandomDocsInParent.zip");
-            repository.ExportDocuments(ids.ToString(), testDirectory + Path.DirectorySeparatorChar + "RandomDocsInParent.zip");
+            CurrentRepository.ExportDocuments(ids.ToString(), testDirectory + Path.DirectorySeparatorChar + "RandomDocsInParent.zip");
         }
 
-        private void ExportParent(Repository repository)
+        private void ExportParent()
         {
             string parentPath = ProcessBasePath + parentFolderId;
-			FileInfo zipFile = repository.ExportFolder(parentPath, testDirectory + Path.DirectorySeparatorChar + parentFolderId + ".zip");
+			FileInfo zipFile = CurrentRepository.ExportFolder(parentPath, testDirectory + Path.DirectorySeparatorChar + parentFolderId + ".zip");
 			WriteOutput("[ExportFolderToZip] Export Folder completed and stored: " + testDirectory + Path.DirectorySeparatorChar + parentFolderId + ".zip");
         }
 
-        private void CreateFromTemplate(Repository repository, List<AssignDocument> assignDocs)
+        private void CreateFromTemplate()
         {
             
             Random rnd = new Random();
             //get list of templates
-            Feed<RestDocument> results = repository.ExecuteDQL<RestDocument>(String.Format("select * from dm_document where FOLDER('/Templates') "), new FeedGetOptions { Inline = true, Links = true });
+            Feed<RestDocument> results = CurrentRepository.ExecuteDQL<RestDocument>(String.Format("select * from dm_document where FOLDER('/Templates') "), new FeedGetOptions { Inline = true, Links = true });
             List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(results, true);
             int resultSamples = docs.Count;
 
@@ -539,12 +458,12 @@ namespace Emc.Documentum.Rest.Test
             List<string> req = childList;
             for (int i = 0; i < 10; i++)
             {
-                AssignDocument assignDoc = assignDocs[rnd.Next(0, assignDocs.Count)];
+                AssignDocument assignDoc = AssignDocs[rnd.Next(0, AssignDocs.Count)];
                 string assignPath = assignDoc.getPath();
                 string childId = assignDoc.ChildId;
                 //select one of the documents
                 RestDocument template = docs[rnd.Next(0, resultSamples)];
-                RestDocument newDoc = repository.copyDocument(template.getAttributeValue("r_object_id").ToString(), ProcessBasePath + assignPath);
+                RestDocument newDoc = CurrentRepository.copyDocument(template.getAttributeValue("r_object_id").ToString(), ProcessBasePath + assignPath);
 
                 newDoc.setAttributeValue("subject", "Created From Template: " + template.getAttributeValue("object_name"));
                 string documentName = ObjectUtil.NewRandomDocumentName("FROMTEMPLATE");
@@ -552,12 +471,12 @@ namespace Emc.Documentum.Rest.Test
                 newDoc.Save();
                 string objectId = newDoc.getAttributeValue("r_object_id").ToString();
                 //String childId = parentFolderId + " CHILD-" + new Random().Next(0, 5);
-                assignDocs.Add(new AssignDocument(objectId, parentFolderId, childId));
+                AssignDocs.Add(new AssignDocument(objectId, parentFolderId, childId));
                 WriteOutput("\t[CreateDocumentFromTemplate] Created document " + documentName + " from template " + template.getAttributeValue("object_name").ToString());
             }
         }
 
-        public void SearchForDocuments(Repository repository)
+        public void SearchForDocuments()
         {
             long tStart = DateTime.Now.Ticks;
 
@@ -565,14 +484,14 @@ namespace Emc.Documentum.Rest.Test
             //Thread.Sleep(10000);
             Search search = new Search();
             search.Query = "document";
-            search.Locations = "/SystemA/Process/" + parentFolderId; // childList[new Random().Next(0, childList.Count)];
+            search.Locations = ProcessBasePath + parentFolderId; // childList[new Random().Next(0, childList.Count)];
 
             search.ItemsPerPage = 20;
             //search.PageNumber = 1;
             int totalResults = 0;
             double totalPages = 0d;
             WriteOutput("[SearchResults] Return a list of documents using search criteria: " + search.Query + " Location: '" + search.Locations + "'");
-            SearchFeed<RestDocument> feedResults = repository.ExecuteSearch<RestDocument>(search);
+            SearchFeed<RestDocument> feedResults = CurrentRepository.ExecuteSearch<RestDocument>(search);
             if (feedResults != null)
             {
                 totalResults = feedResults.Total;
@@ -595,11 +514,14 @@ namespace Emc.Documentum.Rest.Test
                     WriteOutput("\n\n");
                 }
 
+            } else
+            {
+                throw new Exception("SearchResults are NULL so an error occurred. Check the log for errors.");
             }
             WriteOutput("[SearchResults] Result Count: " + totalResults + " Pages: " + totalPages + " Processed in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
         }
 
-        public void ImportEmail(Repository repository, float pctTest)
+        public void ImportEmail(float pctTest)
         {
             Random rnd = new Random();
             DirectoryInfo dirInfo = new DirectoryInfo(randomEmailsDirectory);
@@ -613,7 +535,7 @@ namespace Emc.Documentum.Rest.Test
                     WriteOutput("####EMAILIMPORTFAIL##### - No MSG Files are in your test files directory" + randomEmailsDirectory + " unable to do mailimport test");
                     return;
                 }
-                EmailPackage email = repository.ImportEmail(file, testPrefix + "-" + file.Name, assignPath);
+                EmailPackage email = CurrentRepository.ImportEmail(file, testPrefix + "-" + file.Name, assignPath);
                 WriteOutput("\t[EmailImport] Email Import\t[DeDuplication] Email-De-duplication");
                 Boolean isDuplicate = email.IsDuplicate;
                 if (isDuplicate)
@@ -626,7 +548,7 @@ namespace Emc.Documentum.Rest.Test
                     else
                     {
                         WriteOutput("\t\t" + email.Email.getAttributeValue("object_name") + " already exists elsewhere, LINKING to " + assignPath);
-                        repository.linkToFolder(email.Email, assignPath);
+                        CurrentRepository.linkToFolder(email.Email, assignPath);
                     }
                 }
                 else
@@ -641,15 +563,15 @@ namespace Emc.Documentum.Rest.Test
             } 
         }
 
-        private void CloseSupportingDocThenParent(Repository repository)
+        private void CloseSupportingDocThenParent()
         {
             WriteOutput("\t[DeclareRecord,SetCloseCondition,UnsetCloseCondition]");
             foreach (string cr in childList)
             {
                 Folder childFolder = null;
-                childFolder = repository.getFolderByPath(cr);
+                childFolder = CurrentRepository.getFolderByPath(cr);
                 DateTime closeDate = DateTime.Now;
-                List<PersistentObject> retainers = repository.CloseFolderAndStartRetention(Repository.RecordType.Extradition, childFolder, closeDate);
+                List<PersistentObject> retainers = CurrentRepository.CloseFolderAndStartRetention(Repository.RecordType.Extradition, childFolder, closeDate);
                 DateTime checkDate = DateTime.Parse(retainers[0].getAttributeValue("event_date").ToString());
                 try
                 {
@@ -666,13 +588,13 @@ namespace Emc.Documentum.Rest.Test
                 }
                 
             }
-            Folder parentFolder   = repository.getFolderByPath(ProcessBasePath + parentFolderId);
-            repository.CloseFolderAndStartRetention(Repository.RecordType.MLAT, parentFolder, DateTime.Now);
+            Folder parentFolder   = CurrentRepository.getFolderByPath(ProcessBasePath + parentFolderId);
+            CurrentRepository.CloseFolderAndStartRetention(Repository.RecordType.MLAT, parentFolder, DateTime.Now);
             WriteOutput("\t\t[SetCloseCondition] - Closing PARENT " + parentFolder.getAttributeValue("object_name") + " Declared as: " + Repository.RecordType.MLAT);
                 
         }
 
-        private void ReOpenParentOrChild(Repository repository)
+        private void ReOpenParentOrChild()
         {
             
             for (int i = 0; i < (Math.Ceiling(childList.Count * .20)); i++)
@@ -683,14 +605,14 @@ namespace Emc.Documentum.Rest.Test
                 if (cr.Contains("/"))
                 {
                     type = Repository.RecordType.Extradition;
-                    folder = repository.getFolderByPath(cr);
+                    folder = CurrentRepository.getFolderByPath(cr);
                 }
                 else
                 {
-                    folder = repository.getFolderByPath(ProcessBasePath + cr);
+                    folder = CurrentRepository.getFolderByPath(ProcessBasePath + cr);
                 }
                 // Pass a null date to zero out the Close Date event on the retainer to stop aging
-                List<PersistentObject> retainers = repository.CloseFolderAndStartRetention(type, folder, new DateTime());
+                List<PersistentObject> retainers = CurrentRepository.CloseFolderAndStartRetention(type, folder, new DateTime());
 
 
                 if (retainers[0].getAttributeValue("event_date") == null)
@@ -704,14 +626,14 @@ namespace Emc.Documentum.Rest.Test
             }
         }
 
-        private void ReturnListOfDocuments(Repository repository, List<AssignDocument> assignDocs)
+        private void ReturnListOfDocuments()
         {
             Random rnd = new Random();
             // Return a list of documents in a parentFolder
-            int resultSamples = assignDocs.Count < 5? assignDocs.Count : 5;
+            int resultSamples = AssignDocs.Count < 5? AssignDocs.Count : 5;
             for(int i=0; i<resultSamples;i++) {
-                string path = ProcessBasePath + assignDocs[rnd.Next(0,resultSamples)];
-                Feed<RestDocument> results = repository.ExecuteDQL<RestDocument>(
+                string path = ProcessBasePath + AssignDocs[rnd.Next(0,resultSamples)];
+                Feed<RestDocument> results = CurrentRepository.ExecuteDQL<RestDocument>(
                     String.Format("select * from dm_document where folder('{0}', DESCEND)", path), new FeedGetOptions { Inline=true, Links=true });
                 List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(results, true);
                 WriteOutput(String.Format("\t\t[ReturnListOfDocumentsFromQuery] Returning list of documents in path [{0}]", path));
@@ -725,17 +647,17 @@ namespace Emc.Documentum.Rest.Test
             
         }
 
-        private void ImportAsNewVersion(Repository repository, List<AssignDocument> assignDocs)
+        private void ImportAsNewVersion()
         {
-            List<AssignDocument> myList = new List<AssignDocument>(assignDocs);
+            List<AssignDocument> myList = new List<AssignDocument>(AssignDocs);
             WriteOutput(("\t[ImportAsNewVersion] Importing new Content to existing objects as New Versions"));
             for (int i = 0; i < (Math.Ceiling(myList.Count * .20)); i++)
             {
                 AssignDocument aDoc = myList[i];
                 myList.Remove(aDoc);
 
-                RestDocument doc = repository.getObjectById<RestDocument>(myList[i].DocumentId); 
-                //RestDocument doc = repository.getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'",
+                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(myList[i].DocumentId); 
+                //RestDocument doc = CurrentRepository.getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'",
                 //    myList[i].DocumentId), new FeedGetOptions { Inline = true, Links = true });
                 Feed<OutlineAtomContent> versions = doc.GetVersionHistory<OutlineAtomContent>(null);
                 List <Entry<OutlineAtomContent>> entries = versions.Entries;
@@ -762,7 +684,7 @@ namespace Emc.Documentum.Rest.Test
                     WriteOutput("\t\t[CheckOut] - #####FAILED##### CHECK OUT DOCUMENT");
                 }
                 FileInfo file = ObjectUtil.getRandomFileFromDirectory(randomFilesDirectory);
-                doc = repository.ImportDocumentAsNewVersion(doc, file);
+                doc = CurrentRepository.ImportDocumentAsNewVersion(doc, file);
                 WriteOutput("\t [ImportAsNewVersion] Import RestDocument as New Version");
 
                 if (doc.IsCheckedOut())
@@ -780,7 +702,7 @@ namespace Emc.Documentum.Rest.Test
                 WriteOutput("\t\tNewDocumentVersion: " + doc.getRepeatingValuesAsString("r_version_label", ",") + " ID: " + doc.getAttributeValue("r_object_id").ToString());
                 WriteOutput("\t\t[ListVersions] - List of document versions:");
                 WriteOutput("Versions:");
-                List<RestDocument> allVersions = repository.getAllDocumentVersions(doc);
+                List<RestDocument> allVersions = CurrentRepository.getAllDocumentVersions(doc);
                 foreach (RestDocument vDoc in allVersions)
                 {
                     WriteOutput(String.Format("\t\t\t ChronicleID: {0} ObjectID: {1} VersionLabel: {2}",
@@ -792,10 +714,10 @@ namespace Emc.Documentum.Rest.Test
             
         }
 
-        public void ViewDocument(Repository repository, String path, string objectId, bool openDocument)
+        public void ViewDocument(String path, string objectId, bool openDocument)
         {
 
-            RestDocument doc = repository.getObjectById<RestDocument>(objectId);
+            RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId);
 
             ContentMeta contentMeta = doc.getContent();
             if (contentMeta == null)
@@ -813,9 +735,9 @@ namespace Emc.Documentum.Rest.Test
             if (openDocument) System.Diagnostics.Process.Start(downloadedContentFile.FullName);
         }
 
-        private void checkDocumentHistory(Repository repository, List<AssignDocument> assignDocs)
+        private void checkDocumentHistory()
         {
-            List<AssignDocument> newList = new List<AssignDocument>(assignDocs);
+            List<AssignDocument> newList = new List<AssignDocument>(AssignDocs);
 
             double assignCount = Math.Ceiling(newList.Count * .10);
             for (int a = 0; a < assignCount; a++)
@@ -823,10 +745,10 @@ namespace Emc.Documentum.Rest.Test
                 AssignDocument aDoc = ObjectUtil.getRandomObjectFromList<AssignDocument>(newList);
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
-                RestDocument doc = repository.getObjectById<RestDocument>(aDoc.DocumentId); //repository.getDocumentByQualification(
+                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(aDoc.DocumentId); //CurrentRepository.getDocumentByQualification(
                     //String.Format("dm_document(all) where r_object_id = '{0}'",aDoc.DocumentId), null);
                 WriteOutput("\t" + aDoc.DocumentId + ":" + doc.getAttributeValue("object_name").ToString() + " - RestDocument History:");
-                Feed<AuditEntry> auditInfo = repository.getDocumentHistory(HistoryType.THISDOCUMENTONLY, doc);
+                Feed<AuditEntry> auditInfo = CurrentRepository.getDocumentHistory(HistoryType.THISDOCUMENTONLY, doc);
                 List<AuditEntry> entries = ObjectUtil.getFeedAsList(auditInfo,true);
                 //List<Entry<AuditEntry>> entries = (List<Entry<AuditEntry>>)auditInfo.Entries;
                 foreach (AuditEntry history in entries)
@@ -842,10 +764,9 @@ namespace Emc.Documentum.Rest.Test
         /// Move 5 percent of the (no less than 1) documents from child to parentFolder level (Shows Re-Filing Documents)
         /// </summary>
         /// <param name="assignDocs"></param>
-        /// <param name="repository"></param>
-        private void reassignChildDocumentsToParent(Repository repository, List<AssignDocument> assignDocs)
+        private void reassignChildDocumentsToParent()
         {
-            List<AssignDocument> newList = new List<AssignDocument>(assignDocs);
+            List<AssignDocument> newList = new List<AssignDocument>(AssignDocs);
             double assignCount = Math.Ceiling(newList.Count * .30);
             for (int a = 0; a < assignCount; a++)
             {
@@ -853,20 +774,20 @@ namespace Emc.Documentum.Rest.Test
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
                 String currentPath = ProcessBasePath + aDoc.getPath();
-                RestDocument docToMove = repository.getObjectById<RestDocument>(aDoc.DocumentId);
+                RestDocument docToMove = CurrentRepository.getObjectById<RestDocument>(aDoc.DocumentId);
                 List<String> childPathAndFolder = ObjectUtil.getPathAndFolderNameFromPath(currentPath);
                 String parentFolderPath = childPathAndFolder[0];
                 String childFolderName = childPathAndFolder[1];
-                Folder childFolder = repository.getFolderByQualification(
+                Folder childFolder = CurrentRepository.getFolderByQualification(
                     String.Format("dm_folder where r_object_id = '{0}'", 
                     docToMove.getRepeatingValue("i_folder_id", 0)), new FeedGetOptions { Inline = true, Links = true });
                 List<String> parentPathAndFolder = ObjectUtil.getPathAndFolderNameFromPath(parentFolderPath);
                 String folderPath = parentPathAndFolder[0];
                 String parentFolderName = parentPathAndFolder[1];
-                Folder parentFolder = repository.getFolderByQualification(
+                Folder parentFolder = CurrentRepository.getFolderByQualification(
                     String.Format("dm_folder where folder('{0}') and object_name='{1}'", folderPath,
                     parentFolderName), new FeedGetOptions { Inline = true, Links = true });
-                repository.moveDocument(docToMove, childFolder, parentFolder);
+                CurrentRepository.moveDocument(docToMove, childFolder, parentFolder);
                 WriteOutput("\t\t[MoveDocument] - RestDocument reassigned from " + currentPath + " to " + parentFolderPath);
             }
         }
@@ -878,15 +799,13 @@ namespace Emc.Documentum.Rest.Test
         /// Use Cases  [Import New RestDocument], [Copy/Move RestDocument], [DeleteDocument]
         ///             [Folder Structure]
         /// </summary>
-        /// <param name="repository"></param>
         /// <returns></returns>
-        public List<AssignDocument> CreateTempDocs(Repository repository)
+        public void CreateTempDocs()
         {
-            List<AssignDocument> assignDocs = new List<AssignDocument>();
             tempPath = tempPath + "-" + threadNum;
 
             WriteOutput("[CreateOrGetFolderPath] - Creating or getting folder by path: " + tempPath);
-            Folder tempFolder = repository.getOrCreateFolderByPath(tempPath);
+            Folder tempFolder = CurrentRepository.getOrCreateFolderByPath(tempPath);
             WriteOutput("\tFolder: " + tempFolder.getAttributeValue("object_name") + ":" 
                 + tempFolder.getAttributeValue("r_object_id") + " successfully created!");
             WriteOutput("\tCreating " + numDocs + " random documents.");
@@ -895,12 +814,12 @@ namespace Emc.Documentum.Rest.Test
             {
                 FileInfo file = ObjectUtil.getRandomFileFromDirectory(randomFilesDirectory);
                 
-                RestDocument tempDoc = repository.ImportNewDocument(file, testPrefix + "-" + file.Name, tempPath);
+                RestDocument tempDoc = CurrentRepository.ImportNewDocument(file, testPrefix + "-" + file.Name, tempPath);
                 WriteOutput("\t\t[ImportDocument] - RestDocument " + file.FullName + " imported as " 
                     + tempDoc.getAttributeValue("object_name") + " ObjectID: " 
                     + tempDoc.getAttributeValue("r_object_id").ToString());
                 WriteOutput("\t\t\t[DeDuplication] - Performing Duplicate Detection on content in holding area....");
-                CheckDuplicates(repository, tempDoc, tempPath);
+                CheckDuplicates(tempDoc, tempPath);
 
                 // Cannot randomly assign parentFolders as threads will step on each other. Limit one thread to one 
                 // parentFolder 
@@ -913,21 +832,20 @@ namespace Emc.Documentum.Rest.Test
                 RestDocument doc = tempDoc.fetch<RestDocument>();
                 doc.setAttributeValue("title", "Set properties test");
                 doc.Save();
-                assignDocs.Add(new AssignDocument(objectId, parentFolderId, childId));
+                AssignDocs.Add(new AssignDocument(objectId, parentFolderId, childId));
                 // To show we can assign the same document to multiple childFolderDocs
                 if (previousChildId != null && !previousChildId.Equals(childId))
                 {
                     WriteOutput("\t\t\tAssigning this document to another child to show the same document can be copied/assigned to multiple childFolderDocs");
-                    assignDocs.Add(new AssignDocument(objectId, parentFolderId, previousChildId));
+                    AssignDocs.Add(new AssignDocument(objectId, parentFolderId, previousChildId));
                 }
                 previousChildId = childId;
             } // Done with temp creation loop
-            return assignDocs;
         }
 
-        private void CheckDuplicates(Repository repository, RestDocument doc, string path)
+        private void CheckDuplicates(RestDocument doc, string path)
         {
-            List<PersistentObject> dupes = repository.CheckForDuplicate((String)doc.getAttributeValue("r_object_id"), path);
+            List<PersistentObject> dupes = CurrentRepository.CheckForDuplicate((String)doc.getAttributeValue("r_object_id"), path);
             StringBuilder dupeList = new StringBuilder();
             if (dupes.Count != 0)
             {
@@ -969,15 +887,14 @@ namespace Emc.Documentum.Rest.Test
         /// <summary>
         /// Called by CreateTempDocs in order to create parent/child folders and randomly assign documents to parent/child folders.
         /// </summary>
-        /// <param name="repository"></param>
         /// <param name="assignDocs"></param>
-        private void AssignToFolders (Repository repository, List<AssignDocument> assignDocs)
+        private void AssignToFolders ()
         {
             //WriteOutput("Getting the holding folder for documents prior to Parent/Child assignment...");
-            Folder tempFolder = repository.getFolderByQualification("dm_folder where any r_folder_path = '" 
+            Folder tempFolder = CurrentRepository.getFolderByQualification("dm_folder where any r_folder_path = '" 
                 + tempPath + "'", new FeedGetOptions{ Inline = true, Links = true });
             WriteOutput("\tAssigning Documents from folder: " + tempFolder.getAttributeValue("object_name"));
-            foreach (AssignDocument assignDoc in assignDocs)
+            foreach (AssignDocument assignDoc in AssignDocs)
             {
                 String parentFolderId = assignDoc.ParentId;
                 String childId = assignDoc.ChildId;
@@ -985,11 +902,11 @@ namespace Emc.Documentum.Rest.Test
                 String assignPath = ProcessBasePath + assignDoc.getPath();
                 // Our parentFolder/child tracker for doing record declaration later
                 addSupportingDoc(assignPath);
-                Folder destinationDir = repository.getOrCreateFolderByPath(assignPath);
-                RestDocument docToCopy = repository.getObjectById<RestDocument>(assignDoc.DocumentId); // getDocumentByQualification("dm_document where r_object_id = '"
+                Folder destinationDir = CurrentRepository.getOrCreateFolderByPath(assignPath);
+                RestDocument docToCopy = CurrentRepository.getObjectById<RestDocument>(assignDoc.DocumentId); // getDocumentByQualification("dm_document where r_object_id = '"
                      //+ assignDoc.DocumentId + "'", new FeedGetOptions { Inline = true, Links = true });
                 // To copy the document, we need to get a reference object
-                CheckDuplicates(repository, docToCopy, ProcessBasePath + assignDoc.getPath());
+                CheckDuplicates(docToCopy, ProcessBasePath + assignDoc.getPath());
                 RestDocument copiedDoc = destinationDir.CreateSubObject<RestDocument>(docToCopy.GetCopy<RestDocument>(), null);
                 WriteOutput("\t[CopyDocument] - Assigned RestDocument: " + copiedDoc.getAttributeValue("object_name") + " ID:" 
                     + assignDoc.DocumentId + " to " + ProcessBasePath + assignDoc.getPath());
@@ -998,15 +915,15 @@ namespace Emc.Documentum.Rest.Test
             }
 
             // Delete our temp folder
-            repository.deleteFolder(tempFolder, true, true);
+            CurrentRepository.deleteFolder(tempFolder, true, true);
             WriteOutput("[DeleteFolderAndContents] - Deleted the holding folder and documents");
         }
 
-        public List<string> CreateRendition(Repository repository, List<AssignDocument> assignDocs, int page, bool isPrimary)
+        public void CreateRendition(int page, bool isPrimary)
         {
             List<string> idsWithRenditions = new List<string>();
 
-            List<AssignDocument> newList = new List<AssignDocument>(assignDocs);
+            List<AssignDocument> newList = new List<AssignDocument>(AssignDocs);
 
             double assignCount = Math.Ceiling(newList.Count * .30);
             for (int a = 0; a < assignCount; a++)
@@ -1015,7 +932,7 @@ namespace Emc.Documentum.Rest.Test
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
                 String objectId = aDoc.DocumentId;
-                RestDocument doc = repository.getObjectById<RestDocument>(objectId); //getDocumentByQualification(
+                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId); //getDocumentByQualification(
                 //String.Format("dm_document where r_object_id = '{0}'", objectId), null);
 
                 FileInfo file = ObjectUtil.getRandomFileFromDirectory(randomFilesDirectory);
@@ -1047,16 +964,16 @@ namespace Emc.Documentum.Rest.Test
                 }
                 idsWithRenditions.Add(objectId);
             }
-            return idsWithRenditions;
+            IDsWithRenditions = idsWithRenditions;
         }
 
 
-        public void ViewRenditions(Repository repository, string renditionDirectory, List<string> idsWithRenditions, bool openDocument)
+        public void ViewRenditions(string renditionDirectory, List<string> idsWithRenditions, bool openDocument)
         {
 
             foreach (string objectId in idsWithRenditions)
             {
-                RestDocument doc = repository.getObjectById<RestDocument>(objectId); //.getDocumentByQualification(
+                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId); //.getDocumentByQualification(
                     //String.Format("dm_document where r_object_id = '{0}'", objectId), null);
 
                 ContentMeta renditionMeta = doc.getRenditionByModifier("Test");
@@ -1102,3 +1019,53 @@ namespace Emc.Documentum.Rest.Test
         }
     }
 }
+
+/****************   REMOVED TESTS NOT IN CORE PRODUCT ****************************
+            /**
+             * The below items were enablements in DCTM-Rest to handle email import like WDK does (split email from attachments)
+             * and a record management function to allow setting a event condition date. They are not in standard Rest Services
+             */
+//                try
+//                {
+//                    testName = "ImportEmail";
+//                    WriteOutput("-----BEGIN " + testName + "----------------");
+//                    tStart = DateTime.Now.Ticks;
+//                    float pctTest = 1.0F;
+//                    ImportEmail(pctTest);
+//                    WriteOutput("Imported " + (Math.Ceiling(
+//                        (new DirectoryInfo(randomEmailsDirectory).GetFiles().Count()) * pctTest))
+//                        + " emails in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+//                    WriteOutput("-----END " + testName + "------------------");
+//                }
+//                catch (Exception e)
+//                {
+//                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
+//                }
+//
+//                try
+//                {
+//                    testName = "Close Parent or Child";
+//                    WriteOutput("-----BEGIN " + testName + "----------------");
+//                    tStart = DateTime.Now.Ticks;
+//                    CloseSupportingDocThenParent();
+//                    WriteOutput("Closed " + childList.Count + " parentFolders/childFolderDocs in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+//                    WriteOutput("-----END " + testName + "------------------");
+//                }
+//                catch (Exception e)
+//                {
+//                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
+//                }
+
+//                try
+//                {
+//                    testName = "Re-Open Parent or Child";
+//                    WriteOutput("-----BEGIN " + testName + "----------------");
+//                    tStart = DateTime.Now.Ticks;
+//                    ReOpenParentOrChild();
+//                    WriteOutput("Closed " + childList.Count + " parentFolders/childFolderDocs in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
+//                    WriteOutput("-----END " + testName + "------------------");
+//                }
+//                catch (Exception e)
+//                {
+//                    WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
+//                }

@@ -117,8 +117,8 @@ namespace DroidBlankTest1
 
             long testStart = DateTime.Now.Ticks;
             base.OnCreate(bundle);
-            RestController client = new RestController("dmadmin", "I8@#fbbq");
-            RestService home = client.Get<RestService>("http://10.0.12.31:8080/rest/services", null);
+            RestController client = new RestController("dmadmin", "xxxxxxx");
+            RestService home = client.Get<RestService>("http://mm-d7.mccollough.int:8080/rest/services", null);
             if (home == null)
             {
                 //WriteOutput("\nUnable to get Rest Service at: " + RestHomeUri + " check to see if the service is available.");

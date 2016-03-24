@@ -17,13 +17,14 @@ namespace Emc.Documentum.Rest.Test
 {
     class Program
     {
-        private static string RestHomeUri;
-        private static string username;
-        private static string password;
+        private static string RestHomeUri = "#EXAMPLE: http://apps.company.com/dctm-rest/services):";
+        private static string username = "#EXAMPLE: dmadmin";
+        private static string password = "#EXAMPLE: MyS^p3Cc3P@55W0rd!";
         private static RestController client;
-        private static string repositoryName;
-        private static bool printResult;
+        private static string repositoryName = "#EXAMPLE: CompanyDocbase";
+        private static bool printResult = false;
 
+        private static bool hasConfigInitialized = false;
         [STAThread]
         static void Main(string[] args)
         {
@@ -204,7 +205,7 @@ namespace Emc.Documentum.Rest.Test
             {
                 Console.WriteLine("\t" + title + " [" + value + "]");
                 Console.WriteLine();
-                input = getLineOfInput();
+                input = getLineOfInput("","");
                 if (input != null && !input.Trim().Equals(""))
                 {
                     value = int.Parse(input);
@@ -234,56 +235,110 @@ namespace Emc.Documentum.Rest.Test
             Console.WriteLine("\texit \n\t\t- Exit the Test");
             Console.Write("\r\n\nCommand > ");
 
-            return new Arguments(getLineOfInput().Trim());
+            return new Arguments(getLineOfInput("", "").Trim());
         }
 
-        private static string getLineOfInput()
+        private static string getLineOfInput(String prompt, String defaultValue)
         {
-            string line = Console.ReadLine();
-            Console.WriteLine();
+            string line = null;
+            bool isInputValid = false;
+
+            while (!isInputValid )
+            {
+                if (!String.IsNullOrEmpty(prompt)) Console.WriteLine(prompt);
+                line = Console.ReadLine();
+                if( String.IsNullOrEmpty(line) && defaultValue.StartsWith("#EXAMPLE: ") || line.StartsWith("#EXAMPLE: ") )
+                {
+                    Console.WriteLine("\nInvalid input, value should not start with \"#EXAMPLE: \"");
+                } else
+                {
+                    isInputValid = true;
+                }
+                
+            }
+
             return line;
+        }
+
+        private static String getLineOfHiddenInput(String prompt, String defaultValue)
+        {
+            if (!String.IsNullOrEmpty(prompt)) Console.WriteLine(prompt);
+            ConsoleKeyInfo inf;
+            StringBuilder input = new StringBuilder();
+            inf = Console.ReadKey(true);
+            while (inf.Key != ConsoleKey.Enter)
+            {
+                input.Append(inf.KeyChar);
+                inf = Console.ReadKey(true);
+            }
+            Console.WriteLine();
+            return input.ToString();
+
         }
 
         private static void SetupTestData(bool useDefaults)
         {
-            string defaultRestHomeUri = @"http://localhost:8080/dctm-Rest/services";
-            string defaultUsername = "dmadmin";
-            string defaultPassword = "password";
-            string defaultRepositoryName = "Process";
-            string defaultPrintResult = "false";
 
-            NameValueCollection testConfig = getDefaultConfiguration();
-            if (testConfig != null)
+            NameValueCollection restConfig = getDefaultConfiguration();
+            if (restConfig != null && !hasConfigInitialized)
             {
-                defaultRestHomeUri = testConfig["defaultRestHomeUri"];
-                defaultUsername = testConfig["defaultUsername"];
-                defaultPassword = testConfig["defaultPassword"];
-                defaultRepositoryName = testConfig["defaultRepositoryName"];
-                defaultPrintResult = testConfig["defaultPrintResult"].ToString();
+                RestHomeUri = restConfig["defaultRestHomeUri"];
+                username = restConfig["defaultUsername"];
+                password = restConfig["defaultPassword"];
+                repositoryName = restConfig["defaultRepositoryName"];
+                printResult = Boolean.Parse(restConfig["defaultPrintResult"].ToString());
+                validateConfig();
+                if (hasConfigInitialized)
+                {
+                    setupClient();
+                    return;
+                }
+            }
+            hasConfigInitialized = false;
+            while (!hasConfigInitialized)
+            {
+                if (useDefaults && hasConfigInitialized)
+                {
+                    Console.Write("Configuration completed with default settings. ");
+                    printConfiguration();
+                }
+                else
+                {
+
+                    readSetupParameters(RestHomeUri, username, password, repositoryName, printResult.ToString());
+                    hasConfigInitialized = true;
+                    Console.Write("Re-configuration completed. ");
+                    printConfiguration();
+                    validateConfig();
+                }
             }
 
-            if (useDefaults)
-            {
-                RestHomeUri = defaultRestHomeUri;
-                username = defaultUsername;
-                password = defaultPassword;
-                repositoryName = defaultRepositoryName;
-                printResult = Boolean.Parse(defaultPrintResult);
+            setupClient();
+            
+        }
 
-                Console.Write("Configuration completed with default settings. ");
-                printConfiguration();
-            }
-            else
-            {
-                readSetupParameters(defaultRestHomeUri, defaultUsername, defaultPassword, defaultRepositoryName, defaultPrintResult);
-                Console.Write("Re-configuration completed. ");
-                printConfiguration();
-                Console.WriteLine("Press any key to continue...\r\n");
-            }
-
+        private static void setupClient()
+        {
             client = String.IsNullOrEmpty(password) ? new RestController(null, null) : new RestController(username, password);
             // alternatively, you can choose .net default data contract serializer: new DefaultDataContractJsonSerializer();
             client.JsonSerializer = new JsonDotnetJsonSerializer();
+        }
+
+        private static void validateConfig()
+        {
+            if (!(
+                RestHomeUri.StartsWith("#EXAMPLE: ")
+                && username.StartsWith("#EXAMPLE: ")
+                && password.StartsWith("#EXAMPLE: ") //Ok, so your password can't start with #EXAMPLE: but I will take those odds
+                && repositoryName.StartsWith("#EXAMPLE: ")
+                )
+             )
+            {
+                hasConfigInitialized = true;
+            } else
+            {
+                hasConfigInitialized = false;
+            }
         }
 
         private static NameValueCollection getDefaultConfiguration()
@@ -311,28 +366,23 @@ namespace Emc.Documentum.Rest.Test
             Console.WriteLine("\tPrint the result? \t[" + printResult + "]\r\n");
         }
 
-        public static void readSetupParameters(string defaultRestHomeumentUri, string defaultUsername, string defaultPassword,
+        public static void readSetupParameters(string defaultRestHomeUri, string defaultUsername, string defaultPassword,
             string defaultRepositoryName, string defaultPrintResult)
         {
-            Console.WriteLine("$$$$ Test for the Documentum Rest .NET Client Reference Implementation$$$$\r\n");
-            Console.Write("Set the home document URL [" + defaultRestHomeumentUri + "] :");
-            RestHomeUri = Console.ReadLine();
-            if (String.IsNullOrEmpty(RestHomeUri)) RestHomeUri = defaultRestHomeumentUri;
+            RestHomeUri = getLineOfInput("Set the home document URL [" + defaultRestHomeUri + "] :", defaultRestHomeUri);
+            if (String.IsNullOrEmpty(RestHomeUri)) RestHomeUri = defaultRestHomeUri;
 
-            Console.Write("Set the username [" + defaultUsername + "] :");
-            username = Console.ReadLine();
+            username = getLineOfInput("Set the username [" + defaultUsername + "] :", defaultUsername);
             if (String.IsNullOrEmpty(username)) username = defaultUsername;
 
-            Console.Write("Set the user password [**********] :");
-            password = Console.ReadLine();
+
+            password = getLineOfHiddenInput("Set the user password [**********] :",defaultPassword);
             if (String.IsNullOrEmpty(password)) password = defaultPassword;
 
-            Console.Write("Set the repository name [" + defaultRepositoryName + "] :");
-            repositoryName = Console.ReadLine();
+            repositoryName = getLineOfInput("Set the repository name [" + defaultRepositoryName + "] :", defaultRepositoryName);
             if (String.IsNullOrEmpty(repositoryName)) repositoryName = defaultRepositoryName;
 
-            Console.Write("Whether to print the result [" + defaultPrintResult + "] :");
-            string input = Console.ReadLine();
+            string input = getLineOfInput("Whether to print the result [" + defaultPrintResult + "] :", defaultPrintResult);
             printResult = String.IsNullOrEmpty(input) ? Boolean.Parse(defaultPrintResult) : Boolean.Parse(input);
         }
     }
