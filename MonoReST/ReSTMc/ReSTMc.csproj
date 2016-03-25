@@ -67,7 +67,6 @@
     <Compile Include="controller\Utility\MimeMapping.cs" />
     <Compile Include="controller\Utility\ObjectUtil.cs" />
     <Compile Include="controller\Utility\UriUtil.cs" />
-    <Compile Include="CustomModel\AssignDocument.cs" />
     <Compile Include="DataModel\AuditEntry.cs" />
     <Compile Include="DataModel\Cabinet.cs" />
     <Compile Include="DataModel\ContentMeta.cs" />

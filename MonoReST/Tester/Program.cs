@@ -137,10 +137,12 @@ namespace Emc.Documentum.Rest.Test
                     ProfileConfiguration pc = profileConfigs.getProfileConfiguration(pcl.content.Src);
                     Console.WriteLine(pc.ToString());
                     D2Document d2doc = new D2Document();
-                    d2doc.setAttributeValue("object_name", "D2-1");
+                    d2doc.setAttributeValue("object_name", "D2-1-" + DateTime.Now.Ticks);
                     d2doc.setAttributeValue("primary_bus_owner", "Rest");
                     d2doc.setAttributeValue("template_developers", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("comm_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("business_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("compliance_reviewers", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("brand_reviewers", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("legal_reviewers", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("ada_reviewers", new String[] { "dmadmin" });
@@ -150,6 +152,10 @@ namespace Emc.Documentum.Rest.Test
                     d2doc.setAttributeValue("document_subject", "Automatic Payment");
                     d2doc.setAttributeValue("requester", "dmadmin");
                     d2doc.setAttributeValue("r_object_type", "wf_form_template");
+                    D2Config d2config = new D2Config();
+                    d2config.LifeCycle = "WF Template Lifecycle";
+                    d2config.StartVersion = "0.5";
+
                     d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf").OpenRead(), ObjectUtil.getMimeTypeFromFileName("SizzingExpress.pdf"), null);
                     Console.WriteLine("D2Doc Imported: \n" + d2doc.ToString());
 
