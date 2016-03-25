@@ -136,7 +136,25 @@ namespace Emc.Documentum.Rest.Test
                     /* Output ProfileConfiguration information for each ProfileConfigLink */
                     ProfileConfiguration pc = profileConfigs.getProfileConfiguration(pcl.content.Src);
                     Console.WriteLine(pc.ToString());
-                    D2Document d2doc = repository.ImportNewD2Document(new FileInfo(@"c:\SamplesToImport\readme.txt"), "FirstD2ProfileFromRestFramework", "/Temp", pc);
+                    D2Document d2doc = new D2Document();
+                    d2doc.setAttributeValue("object_name", "D2-1");
+                    d2doc.setAttributeValue("primary_bus_owner", "Rest");
+                    d2doc.setAttributeValue("template_developers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("comm_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("brand_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("legal_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("ada_reviewers", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("template_admins", new String[] { "dmadmin" });
+                    d2doc.setAttributeValue("form_type", "ACT");
+                    d2doc.setAttributeValue("form_subtype", "Alternate Loan Notice");
+                    d2doc.setAttributeValue("document_subject", "Automatic Payment");
+                    d2doc.setAttributeValue("requester", "dmadmin");
+                    d2doc.setAttributeValue("r_object_type", "wf_form_template");
+                    d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf").OpenRead(), ObjectUtil.getMimeTypeFromFileName("SizzingExpress.pdf"), null);
+                    Console.WriteLine("D2Doc Imported: \n" + d2doc.ToString());
+
+
+                    //D2Document d2doc = repository.ImportNewD2Document(new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf"), "FirstD2ProfileFromRestFramework", "/Temp", pc);
                     if (d2doc != null)
                     {
                         Console.WriteLine("\n\nNew D2Document: \n" + d2doc.ToString());
