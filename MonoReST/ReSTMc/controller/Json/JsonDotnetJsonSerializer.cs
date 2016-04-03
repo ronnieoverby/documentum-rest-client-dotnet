@@ -27,6 +27,8 @@ namespace Emc.Documentum.Rest.Net
             set { _formatting = value; } 
         }
 
+        public bool PrintStreamBeforeDeserialize { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -48,9 +50,14 @@ namespace Emc.Documentum.Rest.Net
         /// <returns></returns>
         public override T ReadObject<T>(Stream input)
         {
-            //StreamReader sr = new StreamReader(input);
-            //string text = sr.ReadToEnd();
-            //input.Position = 0;
+            if (PrintStreamBeforeDeserialize)
+            {
+                StreamReader sr = new StreamReader(input);
+                string text = sr.ReadToEnd();
+                Console.WriteLine("JSON Text of input object: \n--------------------------------------------------\n"
+                    + text + "\n\n--------------------------------------------------");
+                input.Position = 0;
+            }
             JsonReader reader = new JsonTextReader(new StreamReader(input));
             T obj = SERIALIZER.Deserialize<T>(reader);
             return obj;

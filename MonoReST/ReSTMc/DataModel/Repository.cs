@@ -778,7 +778,7 @@ namespace Emc.Documentum.Rest.DataModel
             return newDocument;
         }
 
-        public D2Document ImportNewD2Document(FileInfo file, string documentName, string repositoryPath, ProfileConfiguration profile)
+        public D2Document ImportNewD2Document(FileInfo file, string documentName, string repositoryPath, D2Configuration d2config)
         {
             //if (!repositoryPath.StartsWith("/")) throw new Exception("Repository path " + repositoryPath + " is not valid."
             //     + " The path must be a fully qualified path");
@@ -788,13 +788,13 @@ namespace Emc.Documentum.Rest.DataModel
             D2Document newDocument = new D2Document();
             newDocument.setAttributeValue("object_name", documentName);
             newDocument.setAttributeValue("object_type", "dm_document");
-            newDocument.Profile = profile;
-            newDocument.setAttributeValue("d2_configuration", profile);
+            if (d2config != null) newDocument.Configuration = d2config;
+            newDocument.setAttributeValue("d2_configuration", d2config);
             GenericOptions importOptions = new GenericOptions();
             importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Extension));
             D2Document created = ImportD2DocumentWithContent(newDocument, file.OpenRead(), ObjectUtil.getMimeTypeFromFileName(file.Name), importOptions);
 
-            return newDocument;
+            return created;
         }
 
         public D2Document ImportD2DocumentWithContent(D2Document newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)

@@ -115,29 +115,31 @@ namespace Emc.Documentum.Rest.Test
 
                 /* Get the Search Configurations from D2 Config */
                 SearchConfigurations searchConfigs = d2configs.getSearchConfigurations();
-                for (int i = 0; i < searchConfigs.Entries.Count; i++)
+                int i = 0;
+                for (i = 0; i < searchConfigs.Entries.Count; i++)
                 {
                     /* For Each Search configuration, get the entry link */
                     SearchConfigLink scl = searchConfigs.Entries[i];
-                    Console.WriteLine("SearchConfigTitle=" + scl.title + ", SearchConfigId=" + scl.id + " LinkSrc: " + scl.content.Src);
+                    //Console.WriteLine("SearchConfigTitle=" + scl.title + ", SearchConfigId=" + scl.id + " LinkSrc: " + scl.content.Src);
                     /* Ouput SearchConfiguration information for each SearchConfigLink */
                     SearchConfiguration sc = searchConfigs.getSearchConfiguration(scl.content.Src);
-                    Console.WriteLine(sc.ToString());
+                    //Console.WriteLine(sc.ToString());
 
                 }
 
                 /* Get the Profile Configurations from D2 Config */
                 ProfileConfigurations profileConfigs = d2configs.getProfileConfigurations();
-                for (int i = 0; i < profileConfigs.Entries.Count; i++)
-                {
+                i = 0;
+               // for (i=0; i < profileConfigs.Entries.Count; i++)
+                //{
                     /* For each profile configuraton get the entry link */
                     ProfileConfigLink pcl = profileConfigs.Entries[i];
-                    Console.WriteLine("\n\nProfileConfigTitle=" + pcl.title + ", ProfileConfigId=" + pcl.id + " LinkSrc: " + pcl.content.Src);
+                    //Console.WriteLine("\n\nProfileConfigTitle=" + pcl.title + ", ProfileConfigId=" + pcl.id + " LinkSrc: " + pcl.content.Src);
                     /* Output ProfileConfiguration information for each ProfileConfigLink */
                     ProfileConfiguration pc = profileConfigs.getProfileConfiguration(pcl.content.Src);
-                    Console.WriteLine(pc.ToString());
+                    //Console.WriteLine(pc.ToString());
                     D2Document d2doc = new D2Document();
-                    d2doc.setAttributeValue("object_name", "D2-1-" + DateTime.Now.Ticks);
+                    d2doc.setAttributeValue("object_name", "D2-ConfigTst-" + DateTime.Now.Ticks);
                     d2doc.setAttributeValue("primary_bus_owner", "Rest");
                     d2doc.setAttributeValue("template_developers", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("comm_reviewers", new String[] { "dmadmin" });
@@ -149,18 +151,28 @@ namespace Emc.Documentum.Rest.Test
                     d2doc.setAttributeValue("template_admins", new String[] { "dmadmin" });
                     d2doc.setAttributeValue("form_type", "ACT");
                     d2doc.setAttributeValue("form_subtype", "Alternate Loan Notice");
-                    d2doc.setAttributeValue("document_subject", "Automatic Payment");
+                    d2doc.setAttributeValue("document_subject", "Automatic payment");
                     d2doc.setAttributeValue("requester", "dmadmin");
                     d2doc.setAttributeValue("r_object_type", "wf_form_template");
-                    D2Config d2config = new D2Config();
+                    d2doc.setAttributeValue("r_is_virtual_doc", Convert.ToInt32(true));
+                    d2doc.setAttributeValue("import_archive", false);
+                    d2doc.setAttributeValue("a_status", "Revise");
+                    d2doc.setAttributeValue("merge_needed", true);
+                    d2doc.setAttributeValue("system_ver_available", true);
+                    D2Configuration d2config = new D2Configuration();
                     d2config.LifeCycle = "WF Template Lifecycle";
-                    d2config.StartVersion = "0.5";
+                    d2config.StartVersion = 0.5d;
+                    // This was an attempt to figure out what the properties_string/properties_xml properties that d2-config has. It was a fail 
+                    // so will have to wait for documentation to update to reflect what these do.
+                    //d2config.PropertiesString = "title=BLAHBLAHBLAH";
+                    d2doc.Configuration = d2config;
 
-                    d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf").OpenRead(), ObjectUtil.getMimeTypeFromFileName("SizzingExpress.pdf"), null);
+                    GenericOptions importOptions = new GenericOptions();
+                    importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile("SizzingExpress.pdf"));
+                    d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf")
+                        .OpenRead(), ObjectUtil.getMimeTypeFromFileName("SizzingExpress.pdf"), importOptions);
                     Console.WriteLine("D2Doc Imported: \n" + d2doc.ToString());
 
-
-                    //D2Document d2doc = repository.ImportNewD2Document(new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf"), "FirstD2ProfileFromRestFramework", "/Temp", pc);
                     if (d2doc != null)
                     {
                         Console.WriteLine("\n\nNew D2Document: \n" + d2doc.ToString());
@@ -170,7 +182,7 @@ namespace Emc.Documentum.Rest.Test
                         Console.WriteLine("Creation failed!");
                         result = false;
                     }
-                }
+                //}
 
             }
             else {
@@ -345,7 +357,9 @@ namespace Emc.Documentum.Rest.Test
         {
             client = String.IsNullOrEmpty(password) ? new RestController(null, null) : new RestController(username, password);
             // alternatively, you can choose .net default data contract serializer: new DefaultDataContractJsonSerializer();
-            client.JsonSerializer = new JsonDotnetJsonSerializer();
+            JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
+            serializer.PrintStreamBeforeDeserialize = true;
+            client.JsonSerializer = serializer;
         }
 
         private static void validateConfig()

@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataModel\D2\D2Configuration.cs" />
     <Compile Include="DataModel\D2\D2Configurations.cs" />
     <Compile Include="DataModel\D2\D2Document.cs" />
     <Compile Include="DataModel\D2\ProfileConfiguration.cs" />
