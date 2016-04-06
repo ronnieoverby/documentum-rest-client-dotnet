@@ -73,6 +73,16 @@ namespace Emc.Documentum.Rest.DataModel
                 options);
         }
 
+        public Feed<D2Task> GetD2TaskList()
+        {
+            FeedGetOptions options = new FeedGetOptions();
+            options.Inline = true;
+            return Client.GetFeed<D2Task>(
+                this.Links, 
+                LinkRelations.TASK_LIST.Rel, 
+                options);
+        }
+
         public bool isD2Rest()
         {
             string d2ConfigLink = LinkRelations.FindLinkAsString(

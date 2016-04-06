@@ -56,10 +56,12 @@
     <Compile Include="DataModel\D2\D2Configuration.cs" />
     <Compile Include="DataModel\D2\D2Configurations.cs" />
     <Compile Include="DataModel\D2\D2Document.cs" />
+    <Compile Include="DataModel\D2\D2Task.cs" />
     <Compile Include="DataModel\D2\ProfileConfiguration.cs" />
     <Compile Include="DataModel\D2\ProfileConfigurations.cs" />
     <Compile Include="DataModel\D2\SearchConfigurations.cs" />
     <Compile Include="DataModel\D2\SearchConfiguration.cs" />
+    <Compile Include="DataModel\D2\TaskRequirements.cs" />
     <Compile Include="DataModel\RestDocument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controller\Utility\LinkRelations.cs" />
