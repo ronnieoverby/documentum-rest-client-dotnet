@@ -371,7 +371,13 @@ namespace Emc.Documentum.Rest.Http.Utility
                         Linkable linkable = content as Linkable;
                         if (linkable.Links.Count > 0)
                         {
-                            fullContent = feed.Client.Get<T>((content as Linkable).Links[0].Href, null);
+                            
+                            Link self = LinkRelations.FindLink((content as Linkable).Links, LinkRelations.SELF.Rel);
+                            if(self == null)
+                            {
+                                self = (content as Linkable).Links[0];
+                            }
+                            fullContent = feed.Client.Get<T>(self.Href, null);
                         }
                         else fullContent = content;
                     }

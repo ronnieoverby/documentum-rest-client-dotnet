@@ -112,6 +112,7 @@ namespace Emc.Documentum.Rest.Test
             {
                 /* Get D2 Configs */
                 D2Configurations d2configs = repository.GetD2Configurations(null);
+                
 
                 /* Get the Search Configurations from D2 Config */
                 SearchConfigurations searchConfigs = d2configs.getSearchConfigurations();
@@ -168,10 +169,10 @@ namespace Emc.Documentum.Rest.Test
                     d2doc.Configuration = d2config;
 
                     GenericOptions importOptions = new GenericOptions();
-                    importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile("SizzingExpress.pdf"));
-                    d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\SizzlingExpress.pdf")
-                        .OpenRead(), ObjectUtil.getMimeTypeFromFileName("SizzingExpress.pdf"), importOptions);
-                    Console.WriteLine("D2Doc Imported: \n" + d2doc.ToString());
+                    importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile("RestDotNetFramework.docx"));
+                    d2doc = repository.ImportD2DocumentWithContent(d2doc,new FileInfo(@"C:\SamplesToImport\RestDotNetFramework.docx")
+                        .OpenRead(), ObjectUtil.getMimeTypeFromFileName("RestDotNetFramework.docx"), importOptions);
+                    
 
                     if (d2doc != null)
                     {
@@ -182,7 +183,25 @@ namespace Emc.Documentum.Rest.Test
                         Console.WriteLine("Creation failed!");
                         result = false;
                     }
-                //}
+                Console.WriteLine("==================================================================================");
+                Console.WriteLine("TaskList Basic Info:");
+                Feed<D2Task> taskFeed = repository.GetD2TaskList();
+                List<D2Task> tasks = ObjectUtil.getFeedAsList(taskFeed);
+                int taskNum = 0;
+                foreach(D2Task task in tasks)
+                {
+                    taskNum++;
+                    Console.WriteLine("TASK #" + taskNum + "-------------------------------------------------");
+                    Console.WriteLine("\tTaskSubject: " + task.TaskSubject + " TaskInstructions: " + task.TaskInstructions);
+                    Console.WriteLine("\tForward Tasks: ");
+                    foreach (String key in task.TaskRequirements.ForwardTasks.Keys)
+                    {
+                        Console.WriteLine("\t\t" + "TaskName: " + key + " TaskId" + task.TaskRequirements.ForwardTasks[key]);
+                    }
+                }
+
+                Console.ReadLine();
+                
 
             }
             else {

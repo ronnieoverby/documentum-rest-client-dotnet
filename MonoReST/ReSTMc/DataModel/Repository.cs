@@ -797,9 +797,8 @@ namespace Emc.Documentum.Rest.DataModel
 
             D2Document newDocument = new D2Document();
             newDocument.setAttributeValue("object_name", documentName);
-            newDocument.setAttributeValue("object_type", "dm_document");
+            newDocument.setAttributeValue("r_object_type", "dm_document");
             if (d2config != null) newDocument.Configuration = d2config;
-            newDocument.setAttributeValue("d2_configuration", d2config);
             GenericOptions importOptions = new GenericOptions();
             importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Extension));
             D2Document created = ImportD2DocumentWithContent(newDocument, file.OpenRead(), ObjectUtil.getMimeTypeFromFileName(file.Name), importOptions);

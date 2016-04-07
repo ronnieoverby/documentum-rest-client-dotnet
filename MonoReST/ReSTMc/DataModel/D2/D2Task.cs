@@ -21,7 +21,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
         public String WorkflowID { get; set; }
 
         [DataMember(Name = "date_sent")]
-        public DateTime DateSent { get; set; }
+        public String DateSent { get; set; }
 
         [DataMember(Name = "date_format")]
         public String DateFormat { get; set; }
@@ -56,6 +56,9 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
         [DataMember(Name = "can_reject")]
         public bool CanReject { get; set; }
+
+        [DataMember(Name = "can_abort")]
+        public bool CanAbort { get; set; }
 
         [DataMember(Name = "can_delegate")]
         public bool CanDelegate { get; set; }
@@ -109,6 +112,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
     }
 
+    [DataContract(Name = "task_context_menu_labels")]
     public class TaskContextMenuLabels
     {
         [DataMember(Name = "label-accept")]
@@ -119,7 +123,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
 
     }
-
+    [DataContract(Name = "task_routed_objects")]
     public class TaskRoutedObjects
     {
         [DataMember(Name = "id")]
@@ -130,5 +134,34 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
         [DataMember(Name = "a_content_type")]
         public String ContentType { get; set; }
+    }
+
+    [DataContract(Name = "task_requirements")]
+    public class TaskRequirements
+    {
+        [DataMember(Name = "intention_required")]
+        public bool IntentionRequired { get; set; }
+
+        [DataMember(Name = "delegate_type")]
+        public String DeletegateType { get; set; }
+
+        [DataMember(Name = "next_tasks_forward")]
+        public Dictionary<String, String> ForwardTasks { get; set; }
+
+        [DataMember(Name = "signoff_forward")]
+        public bool SignoffForward { get; set; }
+
+        [DataMember(Name = "signoff_reject")]
+        public bool SignoffReject { get; set; }
+
+        [DataMember(Name = "comment_forward")]
+        public bool CommentForward { get; set; }
+
+        [DataMember(Name = "comment_reject")]
+        public bool CommentReject { get; set; }
+
+        [DataMember(Name = "delegate_assistance")]
+        public String DelegateAssistance { get; set; }
+
     }
 }

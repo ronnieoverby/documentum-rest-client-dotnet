@@ -51,6 +51,10 @@ namespace AspNetWebFormsRestConsumer
             {
                 lblLoginBanner.CssClass = "message-success";
                 lblLoginBanner.Text = "You are logged in currently as " + Global.UserName;
+            } else
+            {
+                lblLoginBanner.CssClass = "message-error";
+                lblLoginBanner.Text = "You must login first";
             }
         }
 
