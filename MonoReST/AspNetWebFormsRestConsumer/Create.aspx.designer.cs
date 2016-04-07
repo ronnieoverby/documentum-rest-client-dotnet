@@ -40,13 +40,22 @@ namespace AspNetWebFormsRestConsumer {
         protected global::System.Web.UI.WebControls.TextBox txtSubject;
         
         /// <summary>
-        /// txtPathOrProfile control.
+        /// txtPath control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPathOrProfile;
+        protected global::System.Web.UI.WebControls.TextBox txtPath;
+        
+        /// <summary>
+        /// txtStartVersion control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtStartVersion;
         
         /// <summary>
         /// fileToUpload control.

@@ -16,25 +16,14 @@ namespace AspNetWebFormsRestConsumer
         protected void Page_Load(object sender, EventArgs e)
         {
 
+            if (Global.GetRepository() == null) Response.Redirect("Default.aspx");
         }
 
-        protected Repository GetRepository()
-        {
-            RestController client;
-            RestService home;
-            ProductInfo productInfo;
-
-            client = new RestController("dmadmin", "D3m04doc!");
-            home = client.Get<RestService>("http://10.8.76.108:7070/D2-REST_4.6.0/services", null);
-            home.SetClient(client);
-            productInfo = home.GetProductInfo();
-            return home.GetRepository("repo1");
-        }
 
         private void UpdateGrid(String qualifier)
         {
-
-            Feed<RestDocument> feed = GetRepository().ExecuteDQL<RestDocument>("select * from " + qualifier,
+            Repository repository = Global.GetRepository();
+            Feed<RestDocument> feed = repository.ExecuteDQL<RestDocument>("select * from " + qualifier,
                 new FeedGetOptions() { Inline = true, Links = true });
             List<RestDocument> docs = feed == null? null : ObjectUtil.getFeedAsList<RestDocument>(feed);
 
@@ -47,7 +36,7 @@ namespace AspNetWebFormsRestConsumer
                 sdp.Subject = doc.getAttributeValue("subject").ToString();
                 sdp.Title = doc.getAttributeValue("title").ToString();
                 String folderId = doc.getRepeatingString("i_folder_id", 0);
-                Folder folder = GetRepository().getObjectById<Folder>(folderId);
+                Folder folder = repository.getObjectById<Folder>(folderId);
                 String folderPath = folder.getRepeatingString("r_folder_path", 0);
                 sdp.FolderPath = folderPath;
                 lst.Add(sdp);

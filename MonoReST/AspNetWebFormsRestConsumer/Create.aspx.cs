@@ -8,6 +8,7 @@ using Emc.Documentum.Rest.DataModel;
 using Emc.Documentum.Rest.Http.Utility;
 using Emc.Documentum.Rest.Net;
 using System.IO;
+using Emc.Documentum.Rest.DataModel.D2;
 
 namespace AspNetWebFormsRestConsumer
 {
@@ -17,26 +18,14 @@ namespace AspNetWebFormsRestConsumer
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            if (Global.GetRepository() == null) Response.Redirect("Default.aspx");
         }
 
-        protected Repository GetRepository()
-        {
-            RestController client;
-            RestService home;
-            ProductInfo productInfo;
-
-            client = new RestController("dmadmin", "D3m04doc!");
-            home = client.Get<RestService>("http://10.8.76.108:7070/D2-REST_4.6.0/services", null);
-            home.SetClient(client);
-            productInfo = home.GetProductInfo();
-            return home.GetRepository("repo1");
-        }
 
         protected void btnCreate_Click(object sender, EventArgs e)
         {
-            RestDocument doc = null;
-            Repository repository = GetRepository();
+            D2Document doc = null;
+            Repository repository = Global.GetRepository();
             if (String.IsNullOrEmpty(txtName.Text))
             {
                 lblError.Visible = true;
@@ -47,11 +36,11 @@ namespace AspNetWebFormsRestConsumer
             {
                 lblError.Text = "";
                 lblError.Visible = false;
-                if (txtPathOrProfile.Text.Contains("/"))
+                if (txtPath.Text.Contains("/"))
                 {
                     lblError.Visible = true;
                     lblError.Text = "Is a path";
-                    Folder saveToFolder = repository.getOrCreateFolderByPath(txtPathOrProfile.Text);
+                    Folder saveToFolder = repository.getOrCreateFolderByPath(txtPath.Text);
 
                     if (!String.IsNullOrEmpty(fileToUpload.FileName))
                     {
@@ -59,12 +48,15 @@ namespace AspNetWebFormsRestConsumer
                         string fullPath = Path.Combine(Server.MapPath(" "), trailingPath);
                         fileToUpload.SaveAs(fullPath);
                         FileInfo tmpFile = new FileInfo(fullPath);
-                        doc = repository.ImportNewDocument(tmpFile, txtName.Text, txtPathOrProfile.Text);
+                        //doc = repository.ImportNewD2Document(tmpFile, txtName.Text, txtPathOrProfile.Text);
+                        D2Configuration d2Config = new D2Configuration();
+                        d2Config.StartVersion = Double.Parse(txtStartVersion.Text);
+                        doc = repository.ImportNewD2Document(tmpFile, txtName.Text, txtPath.Text, d2Config);
                         doc.setAttributeValue("object_name", txtName.Text);
                         doc.setAttributeValue("title", txtTitle.Text);
                         doc.setAttributeValue("subject", txtSubject.Text);
                         doc.Save();
-                        doc = doc.fetch<RestDocument>();
+                        doc = doc.fetch<D2Document>();
                         lblError.ForeColor = System.Drawing.Color.Green;
                         lblError.Text = "Saved: \n" + doc.ToString();
                         tmpFile.Delete();
@@ -76,6 +68,11 @@ namespace AspNetWebFormsRestConsumer
                     lblError.Text = "Is a profile";
                 }      
             }
+        }
+
+        protected void txtPathOrProfile_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

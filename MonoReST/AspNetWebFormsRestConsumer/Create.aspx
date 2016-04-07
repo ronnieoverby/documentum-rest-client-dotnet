@@ -20,8 +20,11 @@
             <asp:TextBox ID="txtSubject" runat="server"></asp:TextBox>
         </p>
         <p>
-            Path or Profile Name&nbsp;
-            <asp:TextBox ID="txtPathOrProfile" runat="server"></asp:TextBox>
+            Path (may be overridden by autofiling rules):&nbsp;
+            <asp:TextBox ID="txtPath" runat="server" OnTextChanged="txtPathOrProfile_TextChanged"></asp:TextBox>
+        </p>
+        <p>
+            Start Version <asp:TextBox ID="txtStartVersion" runat="server" ValidateRequestMode="Enabled"></asp:TextBox>
         </p>
         <p>
             <asp:FileUpload ID="fileToUpload" runat="server" /><br />
