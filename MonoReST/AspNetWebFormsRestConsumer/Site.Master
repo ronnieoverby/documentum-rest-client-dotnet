@@ -66,8 +66,10 @@
                 <nav>
                     <ul id="menu">
                         <li><a runat="server" href="~/">Home</a></li>
+                        <li><a runat="server" href="~/Tasks">Tasks</a></li>
                         <li><a runat="server" href="~/DQL">DQL</a></li>
                         <li><a runat="server" href="~/Create">Create</a></li>
+                        
                     </ul>
                 </nav>
             </div>

@@ -1,10 +1,12 @@
 ﻿using Emc.Documentum.Rest.DataModel;
+using Emc.Documentum.Rest.DataModel.D2;
 using Emc.Documentum.Rest.Http.Utility;
 using Emc.Documentum.Rest.Net;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -21,9 +23,10 @@ namespace AspNetWebFormsRestConsumer
             Global.Password = txtPassword.Text;
             Global.RestServiceURL = txtRestUrl.Text;
             Repository repository = Global.GetRepository();
-            
-            if(repository != null)
+
+            if (repository != null)
             {
+                lblLoginBanner.Text = "";
                 SingleGetOptions options = new SingleGetOptions();
                 options.Inline = true;
                 User currentUser = repository.GetCurrentUser(options);
@@ -31,7 +34,6 @@ namespace AspNetWebFormsRestConsumer
                 lblUserInfo.ForeColor = System.Drawing.Color.Green;
                 lblUserInfo.Text = "User " + currentUser.getAttributeValue("user_name").ToString() + " successfully logged in!";
                 lblLoginBanner.CssClass = "message-success";
-                lblLoginBanner.Text = "You are logged in currently as " + Global.UserName;
             } else
             {
                 lblUserInfo.Visible = true;
@@ -41,6 +43,8 @@ namespace AspNetWebFormsRestConsumer
             
         }
 
+       
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if(Global.GetRepository() != null)
@@ -49,5 +53,7 @@ namespace AspNetWebFormsRestConsumer
                 lblLoginBanner.Text = "You are logged in currently as " + Global.UserName;
             }
         }
+
+        
     }
 }
