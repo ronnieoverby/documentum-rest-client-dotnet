@@ -9,7 +9,7 @@ namespace Emc.Documentum.Rest.CustomModel
     /// <summary>
     /// Keeps track of which documents go to which parent/child folders
     /// </summary>
-    public class AssignDocument
+    public class DocumentTracker
     {
         /// <summary>
         /// The ID of the document. This ID will change/update when the document is assigned to a parent/child folder as assigning is a copy operation
@@ -31,7 +31,7 @@ namespace Emc.Documentum.Rest.CustomModel
         /// <param name="parentId"></param>
         /// <param name="childId"></param>
 
-        public AssignDocument(string documentId, string parentId, string childId) {
+        public DocumentTracker(string documentId, string parentId, string childId) {
             DocumentId = documentId;
             ParentId = parentId;
             ChildId = childId;
@@ -42,7 +42,7 @@ namespace Emc.Documentum.Rest.CustomModel
         /// </summary>
         /// <param name="documentId"></param>
         /// <param name="parentId"></param>
-        public AssignDocument(string documentId, string parentId)
+        public DocumentTracker(string documentId, string parentId)
         {
             DocumentId = documentId;
             ParentId = parentId;
