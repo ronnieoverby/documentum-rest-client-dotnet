@@ -53,6 +53,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataModel\C2View.cs" />
+    <Compile Include="DataModel\D2\C2ViewEntry.cs" />
+    <Compile Include="DataModel\D2\C2Views.cs" />
     <Compile Include="DataModel\D2\D2Configuration.cs" />
     <Compile Include="DataModel\D2\D2Configurations.cs" />
     <Compile Include="DataModel\D2\D2Document.cs" />

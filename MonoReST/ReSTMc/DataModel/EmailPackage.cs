@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Emc.Documentum.Rest.Net;
-using Emc.Documentum.Rest.Net;
 namespace Emc.Documentum.Rest.DataModel
 {
     public enum DuplicateType

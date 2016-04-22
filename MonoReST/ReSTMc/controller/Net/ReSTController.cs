@@ -256,14 +256,14 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         /// <param name="uri"></param>
         /// <returns></returns>
-        public Stream GetRaw(string uri)
+        public Stream GetRaw(string uri, bool useAuthentication)
         {
             Stream stream = null;
             try
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
                 request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
-                SetBasicAuthHeader(request);
+                if(useAuthentication) SetBasicAuthHeader(request);
                 HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
                 Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
                 long tStart = DateTime.Now.Ticks;
@@ -286,6 +286,10 @@ namespace Emc.Documentum.Rest.Net
             return stream;
         }
 
+        public Stream GetRaw(string uri)
+        {
+            return GetRaw(uri, true);
+        }
 
         /// <summary>
         /// Posts to the Repository

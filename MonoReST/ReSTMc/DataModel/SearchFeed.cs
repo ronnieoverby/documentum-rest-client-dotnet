@@ -50,7 +50,7 @@ namespace Emc.Documentum.Rest.DataModel
 
         private List<SearchEntry<T>> _entries = new List<SearchEntry<T>>();
         [DataMember(Name = "entries")]
-        new public List<SearchEntry<T>> Entries
+        public List<SearchEntry<T>> Entries
         {
             get
             {

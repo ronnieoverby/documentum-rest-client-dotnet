@@ -84,8 +84,6 @@ namespace Emc.Documentum.Rest.Net
             }
         }
 
-        private string _facet = null;
-        private bool _facetSpecified = false;
         /// <summary>
         /// Specifies the property to be used as facet
         /// Default: None

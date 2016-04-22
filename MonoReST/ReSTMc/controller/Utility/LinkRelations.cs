@@ -110,7 +110,9 @@ namespace Emc.Documentum.Rest.Http.Utility
         public static LinkRelations COMMENTS = new LinkRelations("comments", true);
         public static LinkRelations COMMENT = new LinkRelations("comment", true);
         public static LinkRelations TASK_LIST = new LinkRelations("tasklist-d2", true);
-
+        public static LinkRelations C2_VIEW = new LinkRelations("views/c2-view", true);
+        public static LinkRelations C2_PRINT = new LinkRelations("views/c2-print", true);
+        public static LinkRelations PROPERTY_PAGE = new LinkRelations("property-age", true);
         /** Temporary until Only on the NA/4.6 Version, once extensibility is in place. Apparantly some
         of the core rest link relations like checkout/checkin/cancelcheckout will be gone in D2 rest? */
         public static LinkRelations PREVIEW_URLs = new LinkRelations("http://identifiers.com/com/linkrel/preview-urls", true);
