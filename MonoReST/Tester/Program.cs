@@ -309,7 +309,7 @@ namespace Emc.Documentum.Rest.Test
             {
                 return ConfigurationManager.GetSection("restconfig") as NameValueCollection;
             }
-            catch (ConfigurationErrorsException se)
+            catch (ConfigurationErrorsException)
             {
                 Console.WriteLine("Configuration could  not load. If you are running under Visual Studio, ensure:\n" +
                     "\n\"<section name=\"Restconfig\" type=\"System.Configuration.NameValueSectionHandler\"/> is used. " +

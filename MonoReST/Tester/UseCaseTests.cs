@@ -316,7 +316,6 @@ namespace Emc.Documentum.Rest.Test
                 getPreferences();
                 long testStart = DateTime.Now.Ticks;
                 long tStart = DateTime.Now.Ticks;
-                List<DocumentTracker> tracker = null;
 
                 RestService home = client.Get<RestService>(RestHomeUri, null);
                 if (home == null)

@@ -14,6 +14,9 @@ using System.Windows.Forms;
 using System.Threading;
 using Emc.Documentum.Rest.Utility;
 using Emc.Documentum.Rest.DataModel.D2;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Emc.Documentum.Rest.Test
 {
@@ -147,7 +150,7 @@ namespace Emc.Documentum.Rest.Test
         /// <summary>
         /// 
         /// </summary>
-        public void Start()
+        new public void Start()
         {
 
             getPreferences();
@@ -173,11 +176,13 @@ namespace Emc.Documentum.Rest.Test
             NameValueCollection restTests = ConfigurationManager.GetSection("resttests") as NameValueCollection;
             if (!(Boolean.Parse(restTests["CreateTempDocs"].ToString()) || Boolean.Parse(restTests["CreateTempDocs"].ToString())))
             {
-                throw new System.Exception("On of the tests that create Documents is required for other tests to run. "
+                throw new System.Exception("One of the tests that create Documents is required for other tests to run. "
                     + "You must enable either the CreateTempDocs test and/or the CreateTempDocs test in order to create "
                     + "documents that can be used in subsequent tests.");
             }
 
+            C2ViewDocument(@"C:\SamplesToImport", "09000001800d180f", true);
+            return;
             MoveDocs = new List<DocumentTracker>();
             foreach (String key in restTests)
             {
@@ -234,22 +239,53 @@ namespace Emc.Documentum.Rest.Test
         public void C2ViewDocument(String path, string objectId, bool openDocument)
         {
 
-            RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId);
+            D2Document doc = CurrentRepository.getObjectById<D2Document>(objectId);
+            C2Views views = doc.getC2Views();
+            List<C2ViewEntry> entries = views.Entries;
+            C2ViewEntry entry = entries[0];
+            C2View view = entry.C2View;
 
-            ContentMeta contentMeta = doc.getContent();
-            if (contentMeta == null)
+            HttpClientHandler handler = new HttpClientHandler();
+            handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            HttpClient client = new HttpClient(handler);
+    //accept: text / html, application / xhtml + xml, */*
+	/*accept-language : en-US
+	user-agent : Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko
+	accept-encoding : gzip, deflate
+    */
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, view.Url);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+            //request.Headers.Add("connection", "Keep-Alive");
+
+            request.Headers.Add("Accept-Encoding", "gzip");
+            request.Headers.Add("Accept-Encoding", "deflate");
+            request.Headers.Add("accept-language", "en-US");
+            request.Headers.Add("user-agent", "DCTMRestDotNet");
+
+
+            HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
+            Task<HttpResponseMessage> response = client.SendAsync(request, option);
+            long tStart = DateTime.Now.Ticks;
+            HttpResponseMessage message = response.Result;
+
+            Task<Stream> result = message.Content.ReadAsStreamAsync();
+            using (Stream media = result.Result)
             {
-                WriteOutput("!!!!!!!!!!!!!!!!VIEW TEST FAILURE!!!!!!!!!!!!!!!!!!!!");
-                return;
+                if (media == null)
+                {
+                    throw new Exception("Stream came back null. This is normally caused by an unreachable ACS Server (DNS problem or Method Server DOWN). ACS URL is: " + view.Url);
+                }
+                FileStream fs = File.Create(path + "\\Test.Pdf");
+                media.CopyTo(fs);
+                fs.Dispose();
             }
-            FileInfo downloadedContentFile = contentMeta.DownloadContentMediaFile();
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            downloadedContentFile.MoveTo(path + Path.DirectorySeparatorChar + objectId + "-" + downloadedContentFile.Name);
-            WriteOutput("\t\t[GetFileForView] - RestDocument file is located: " + downloadedContentFile.FullName);
-            if (openDocument) System.Diagnostics.Process.Start(downloadedContentFile.FullName);
+
+
+
+            
+            if (openDocument) System.Diagnostics.Process.Start(path+"\\Test.pdf");
         }
 
         private void Temp()
@@ -258,7 +294,7 @@ namespace Emc.Documentum.Rest.Test
             if (CurrentRepository.isD2Rest())
             {
                 /* Get D2 Configs */
-                D2Configurations d2configs = CurrentRepository.GetD2Configurations(null);
+                     D2Configurations d2configs = CurrentRepository.GetD2Configurations(null);
 
 
                 /* Get the Search Configurations from D2 Config */
