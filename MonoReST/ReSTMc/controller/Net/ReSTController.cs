@@ -23,8 +23,10 @@ namespace Emc.Documentum.Rest.Net
         private HttpClient _httpClient = null;
         private MediaTypeWithQualityHeaderValue JSON_GENERIC_MEDIA_TYPE;
         private MediaTypeWithQualityHeaderValue JSON_VND_MEDIA_TYPE;
+        private String USER_AGENT_NAME = "DCTMRestDotNet";
         private AbstractJsonSerializer _jsonSerializer;
         private string _userName;
+        
         //TODO: Change to an interface
         public LoggerFacade Logger { get; set; }
         // Disposable.
@@ -39,6 +41,16 @@ namespace Emc.Documentum.Rest.Net
                 //TODO: Fetch userName after we authenticate rather than relying on passed userName
                 return _userName; 
             }
+        }
+
+        public void setUserAgentName(String name)
+        {
+            USER_AGENT_NAME = name;
+        }
+
+        public String getUserAgentName()
+        {
+            return USER_AGENT_NAME;
         }
 
         /// <summary>
@@ -169,6 +181,7 @@ namespace Emc.Documentum.Rest.Net
             {
                 request = new HttpRequestMessage(HttpMethod.Get, uri);
                 request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
+                request.Headers.Add("user-agent", USER_AGENT_NAME);
                 SetBasicAuthHeader(request);
             }
             catch (Exception e)
@@ -261,9 +274,8 @@ namespace Emc.Documentum.Rest.Net
             Stream stream = null;
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
-                request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
-                if(useAuthentication) SetBasicAuthHeader(request);
+                HttpRequestMessage request = getGetRequest(uri);
+
                 HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
                 Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
                 long tStart = DateTime.Now.Ticks;

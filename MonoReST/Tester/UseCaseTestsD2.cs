@@ -240,45 +240,16 @@ namespace Emc.Documentum.Rest.Test
             List<C2ViewEntry> entries = views.Entries;
             C2ViewEntry entry = entries[0];
             C2View view = entry.C2View;
-
-            HttpClientHandler handler = new HttpClientHandler();
-            handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            HttpClient client = new HttpClient(handler);
-    //accept: text / html, application / xhtml + xml, */*
-	/*accept-language : en-US
-	user-agent : Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko
-	accept-encoding : gzip, deflate
-    */
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, view.Url);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-            //request.Headers.Add("connection", "Keep-Alive");
-
-            request.Headers.Add("Accept-Encoding", "gzip");
-            request.Headers.Add("Accept-Encoding", "deflate");
-            request.Headers.Add("accept-language", "en-US");
-            request.Headers.Add("user-agent", "DCTMRestDotNet");
-
-
-            HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-            Task<HttpResponseMessage> response = client.SendAsync(request, option);
-            long tStart = DateTime.Now.Ticks;
-            HttpResponseMessage message = response.Result;
-
-            Task<Stream> result = message.Content.ReadAsStreamAsync();
-            using (Stream media = result.Result)
+            using (Stream stream = CurrentRepository.Client.GetRaw(view.Url))
             {
-                if (media == null)
+                if (stream == null)
                 {
                     throw new Exception("Stream came back null. This is normally caused by an unreachable ACS Server (DNS problem or Method Server DOWN). ACS URL is: " + view.Url);
                 }
                 FileStream fs = File.Create(path + "\\Test.Pdf");
-                media.CopyTo(fs);
+                stream.CopyTo(fs);
                 fs.Dispose();
             }
-
-
 
             
             if (openDocument) System.Diagnostics.Process.Start(path+"\\Test.pdf");
