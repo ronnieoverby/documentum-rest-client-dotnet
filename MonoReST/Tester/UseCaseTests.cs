@@ -175,9 +175,11 @@ namespace Emc.Documentum.Rest.Test
 
 				renditionsDirectory = testDirectory + Path.DirectorySeparatorChar + "Renditions";
                 primaryContentDirectory = testDirectory + Path.DirectorySeparatorChar + "PrimaryContent";
-                if(!Directory.Exists(randomFilesDirectory))
+                if (!Directory.Exists(randomFilesDirectory))
                 {
-                    String msg = "Unable to find the directory specified: " + randomFilesDirectory + " to pull random content files from. Unable to proceed.";
+                    String msg = "Unable to find the directory specified: " + randomFilesDirectory + " to pull "
+                        + "random content files from. Unable to proceed. Please set this value  to a directory with "
+                        + "some files in it in the application configuration file";
                     WriteOutput(msg);
                     throw new Exception(msg);
                 }
