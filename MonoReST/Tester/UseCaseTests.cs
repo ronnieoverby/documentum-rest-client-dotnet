@@ -249,7 +249,7 @@ namespace Emc.Documentum.Rest.Test
                         // Take 30% of the documents, and download the content, optionally, will open each one for viewing
                         for (int p = 0; p < (Math.Ceiling(Tracker.Count * .3)); p++)
                         {
-                            ViewDocument(primaryContentDirectory, Tracker[p].DocumentId, openEachFile);
+                            ViewDocument(primaryContentDirectory, Tracker[p], openEachFile);
                         }
                         if (showdownloadedfiles) System.Diagnostics.Process.Start(primaryContentDirectory);
                         WriteOutput("Re-Moveed " + Math.Ceiling(Tracker.Count * .30) + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
@@ -300,7 +300,7 @@ namespace Emc.Documentum.Rest.Test
             }
             catch (Exception e)
             {
-                WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.StackTrace.ToString());
+                WriteOutput("#####FAILED##### TEST [" + testName + "]" + e.Message + "," + e.StackTrace.ToString());
             }
             return success;
         }
@@ -588,10 +588,10 @@ namespace Emc.Documentum.Rest.Test
             
         }
 
-        public void ViewDocument(String path, string objectId, bool openDocument)
+        public void ViewDocument(String path, DocumentTracker tracker, bool openDocument)
         {
 
-            RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId);
+            RestDocument doc = CurrentRepository.getObjectById<RestDocument>(tracker.DocumentId);
 
             ContentMeta contentMeta = doc.getContent();
             if (contentMeta == null)
@@ -604,7 +604,7 @@ namespace Emc.Documentum.Rest.Test
             {
                 Directory.CreateDirectory(path);
             }
-			downloadedContentFile.MoveTo(path + Path.DirectorySeparatorChar + objectId + "-" + downloadedContentFile.Name);
+			downloadedContentFile.MoveTo(path + Path.DirectorySeparatorChar + tracker.ChildId + "-" + downloadedContentFile.Name);
             WriteOutput("\t\t[GetFileForView] - RestDocument file is located: " + downloadedContentFile.FullName);
             if (openDocument) System.Diagnostics.Process.Start(downloadedContentFile.FullName);
         }
@@ -844,9 +844,10 @@ namespace Emc.Documentum.Rest.Test
 
         protected void ViewRenditions(string renditionDirectory, List<string> idsWithRenditions, bool openDocument)
         {
-
+            int renditionNumber = 0;
             foreach (string objectId in idsWithRenditions)
             {
+                renditionNumber++;
                 RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId); //.getDocumentByQualification(
                     //String.Format("dm_document where r_object_id = '{0}'", objectId), null);
 
@@ -861,7 +862,7 @@ namespace Emc.Documentum.Rest.Test
                 {
                     Directory.CreateDirectory(renditionDirectory);
                 }
-				downloadedContentFile.MoveTo(renditionDirectory + Path.DirectorySeparatorChar + objectId + "-" + downloadedContentFile.Name);
+				downloadedContentFile.MoveTo(renditionDirectory + Path.DirectorySeparatorChar + objectId + "-"+renditionNumber + "-" + downloadedContentFile.Name);
                 WriteOutput("\t\t[ViewRendition] - Rendition file is located: " + downloadedContentFile.FullName);
                 if(openDocument) System.Diagnostics.Process.Start(downloadedContentFile.FullName);
             }

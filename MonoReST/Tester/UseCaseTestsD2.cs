@@ -4,15 +4,11 @@ using Emc.Documentum.Rest.Net;
 using Emc.Documentum.Rest.Http.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Configuration;
 using System.Collections.Specialized;
 using System.Windows.Forms;
-using System.Threading;
-using Emc.Documentum.Rest.Utility;
 using Emc.Documentum.Rest.DataModel.D2;
 using System.Net;
 using System.Net.Http;
@@ -91,7 +87,7 @@ namespace Emc.Documentum.Rest.Test
                         // Take 30% of the documents, and download the content, optionally, will open each one for viewing
                         for (int p = 0; p < (Math.Ceiling(MoveDocs.Count * .3)); p++)
                         {
-                            ViewDocument(primaryContentDirectory, MoveDocs[p].DocumentId, openEachFile);
+                            ViewDocument(primaryContentDirectory, MoveDocs[p], openEachFile);
                         }
                         if (showdownloadedfiles) System.Diagnostics.Process.Start(primaryContentDirectory);
                         WriteOutput("Re-Moveed " + Math.Ceiling(MoveDocs.Count * .30) + " in " + ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond) + "ms");
