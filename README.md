@@ -1,6 +1,8 @@
 Documentum REST Services .Net Client Samples
 ===================
 
+[![License: Apache 2](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+
 This .Net solution contains a reference implementation of Documentum REST Services clients and tests written in C# code. The purpose of this solution is to demonstrate one way to develop a hypermedia driven REST client to consume Documentum REST Services. It does NOT indicate that users could not develop a REST client using other technologies.
 
 EMC shares the source code of this project for the technology sharing. If users plan to migrate the sample code to their products, they are responsible to maintain this part of the code in their products and should agree with license polices of the referenced libraries used by this sample project.
