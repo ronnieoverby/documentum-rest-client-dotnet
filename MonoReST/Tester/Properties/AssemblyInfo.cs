@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ClientTest")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("DctmRestClientCmdTest")]
+[assembly: AssemblyDescription("Documentum REST Sample Client Command-line Test")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EMC")]
-[assembly: AssemblyProduct("ClientTest")]
-[assembly: AssemblyCopyright("Copyright © EMC 2014")]
+[assembly: AssemblyProduct("DctmRestClientCmdTest")]
+[assembly: AssemblyCopyright("Copyright © EMC 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

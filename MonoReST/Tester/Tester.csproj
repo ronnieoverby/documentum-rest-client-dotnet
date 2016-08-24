@@ -8,7 +8,7 @@
     <ProjectGuid>{E9215B57-E9E6-4C3C-AB16-5EA44D5D4F66}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Tester</RootNamespace>
-    <AssemblyName>Tester</AssemblyName>
+    <AssemblyName>DocumentumRestClientCmdTest</AssemblyName>
     <ApplicationIcon>PerfCenterCpl.ico</ApplicationIcon>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Description>A console appliation that runs through use cases, can perform some level of loading for a repository as well. The source code provides good examples of working with the .NET DCTM-ReST framework.</Description>
@@ -76,9 +76,9 @@
     <None Include="reportXSL.xsl" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReSTMc\ReSTModelAndController.csproj">
+    <ProjectReference Include="..\RestClient\RestClient.csproj">
       <Project>{FC3F7008-D477-49ED-BEA8-B775541127E5}</Project>
-      <Name>ReSTMc</Name>
+      <Name>RestClient</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

@@ -87,9 +87,9 @@
     <Folder Include="Resources\drawable-xxxhdpi\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ReSTMc\ReSTModelAndController.csproj">
+    <ProjectReference Include="..\RestClient\RestClient.csproj">
       <Project>{fc3f7008-d477-49ed-bea8-b775541127e5}</Project>
-      <Name>ReSTMc</Name>
+      <Name>RestClient</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

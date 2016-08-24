@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("AspNetWebFormsRestConsumer")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Documentum REST Client AspNet Web Forms Sample")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EMC Corporation")]
 [assembly: AssemblyProduct("AspNetWebFormsRestConsumer")]

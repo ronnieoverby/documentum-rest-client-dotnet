@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester", "Tester\Tester.csproj", "{E9215B57-E9E6-4C3C-AB16-5EA44D5D4F66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReSTModelAndController", "ReSTMc\ReSTModelAndController.csproj", "{FC3F7008-D477-49ED-BEA8-B775541127E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestClient", "RestClient\RestClient.csproj", "{FC3F7008-D477-49ED-BEA8-B775541127E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DroidXamarinTest", "DroidXamarinTest\DroidXamarinTest.csproj", "{FFB03BB0-0549-49B4-8252-6CBFF1286A11}"
 EndProject

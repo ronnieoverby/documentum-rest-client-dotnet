@@ -7,25 +7,30 @@ This .Net solution contains a reference implementation of Documentum REST Servic
 
 EMC shares the source code of this project for the technology sharing. If users plan to migrate the sample code to their products, they are responsible to maintain this part of the code in their products and should agree with license polices of the referenced libraries used by this sample project.
 
-The solution contains three projects.
+The solution contains four projects.
 
-- ReSTMc
+- RestClient
 - Tester
 - DroidMamarinTest
+- AspNetWebFormsRestConsumer
 
 The client samples have been verified against Documentum REST Services 7.2. For more information, please visit [Documentum REST space in EMC Community Network](https://community.emc.com/docs/DOC-32266).
 
-### ReSTMc
+### RestClient
 
 The main project to implement a REST client that can be used for model and controller. It implements the client side resource invocation of folder/document CRUD, folder navigation, document versioning, content upload/download, copy, move, link, unlink, DQL query, etc. However, it does not cover the full list of Documentum REST resources. It implements the JSON media type. It implements HTTP Basic authentication and optionally supports Kerberos.
 
 ### DroidXamarinTest 
 
-This project uses [Xamarin](http://xamarin.com/) to show how the ReSTMc dll can 	be used on mobile platforms. To use this project, you must use `Xamarin Studio` or	have `Xamarin for Visual Studio` installed. It is definitely nothing fancy, just a basic concept of list cabinets, navigate folders, nothing more.
+This project uses [Xamarin](http://xamarin.com/) to show how the DocumentumRestClient dll can be used on mobile platforms. To use this project, you must use `Xamarin Studio` or	have `Xamarin for Visual Studio` installed. It is definitely nothing fancy, just a basic concept of list cabinets, navigate folders, nothing more.
 
 ### Tester 
 
 This project is a console application to show how end to end functions work (the source code here is a great example of how to handle use cases). It has been tested on Windows and Linux and should work on Mac as well.
+
+### AspNetWebFormsRestConsumer
+
+An asp.net web forms sample to consume the REST services.
 	
 #### QuickStart
 
@@ -61,11 +66,11 @@ To run the Tester program, edit the properties in the `App.config` file. Specifi
 
 You can ignore the random emails directory, this test will not be run unless you have the ReST extensions we have developed for importing email (splitting off attachments like WDK does). If you have TCS installed, the loader can also detect and report duplicate file imports and give you options to deal with them. In some cases, duplication is unavoidable; you need same file in different locations with different security. But having duplicate detection lets you decide what to do, as a programmer, with the duplicate data.
 
-The Tester project is meant to be an example of how one might use the ReSTMc library. The `UseCaseTests.cs` class should be very good for mining use case code from for other projects.
+The Tester project is meant to be an example of how one might use the RestClient library. The `UseCaseTests.cs` class should be very good for mining use case code from for other projects.
 
 ## Cross-platform Compatability
 
-We did a first round of work exposing the Model and Controller dlls (ReSTMc project) as COM (for use in Office VBA, Python, or any other COM aware language). The whole project has been tested under Windows and under Linux (using [Mono](http://www.mono-project.com/)).
+We did a first round of work exposing the Model and Controller dlls (RestClient project) as COM (for use in Office VBA, Python, or any other COM aware language). The whole project has been tested under Windows and under Linux (using [Mono](http://www.mono-project.com/)).
 
 The project compatability reports it is also compatible with .NetCore so it should work on Mobile as well. This
 would include iOS, Droid, and Windows phones.
