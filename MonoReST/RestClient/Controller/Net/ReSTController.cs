@@ -194,9 +194,7 @@ namespace Emc.Documentum.Rest.Net
             string followingUri = LinkRelations.FindLinkAsString(
                 links,
                 rel);
-            Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
-            if (feed != null) feed.Client = this;
-            return feed;
+            return GetFeed<T>(followingUri, options);
         }
 
         /// <summary>
@@ -209,8 +207,23 @@ namespace Emc.Documentum.Rest.Net
         public Feed<T> GetFeed<T>(String followingUri, FeedGetOptions options)
         {
             Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
-            if (feed != null) feed.Client = this;
+            SetFeedAndEntryClient<T>(feed);
             return feed;
+        }
+
+        private void SetFeedAndEntryClient<T>(Feed<T> feed)
+        {
+            if (feed != null) feed.Client = this;
+            if (feed.Entries != null)
+            {
+                foreach (Entry<T> entry in feed.Entries)
+                {
+                    if (entry.Content is Executable)
+                    {
+                        (entry.Content as Executable).SetClient(this);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -305,6 +318,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
+            if (obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 

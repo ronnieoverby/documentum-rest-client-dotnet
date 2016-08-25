@@ -37,7 +37,7 @@ namespace Emc.Documentum.Rest.Net
         public virtual String View
         {
             get {
-                return pa[PARAM_VIEW].ToString();
+                return pa.ContainsKey(PARAM_VIEW) ? pa[PARAM_VIEW].ToString() : ":default";
             }
             set 
             {
@@ -67,7 +67,7 @@ namespace Emc.Documentum.Rest.Net
         {
             get
             {
-                return (Boolean)pa[PARAM_LINKS];
+                return pa.ContainsKey(PARAM_LINKS) ? (Boolean)pa[PARAM_LINKS] : true;
             }
             set {
                 if (pa.ContainsKey(PARAM_LINKS))

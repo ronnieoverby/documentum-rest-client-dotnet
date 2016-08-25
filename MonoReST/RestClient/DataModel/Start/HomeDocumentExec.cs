@@ -80,6 +80,7 @@ namespace Emc.Documentum.Rest.DataModel
                 if (repo.Title.Equals(repositoryName))
                 {
                     repository = repo.Content;
+                    repository.Client = this.Client;
                     break;
                 }
             }

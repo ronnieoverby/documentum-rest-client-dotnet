@@ -36,7 +36,7 @@ namespace AspNetWebFormsRestConsumer
                 sdp.Subject = doc.GetPropertyValue("subject").ToString();
                 sdp.Title = doc.GetPropertyValue("title").ToString();
                 String folderId = doc.GetRepeatingString("i_folder_id", 0);
-                Folder folder = repository.getObjectById<Folder>(folderId);
+                Folder folder = repository.GetSysObjectById<Folder>(folderId);
                 String folderPath = folder.GetRepeatingString("r_folder_path", 0);
                 sdp.FolderPath = folderPath;
                 lst.Add(sdp);

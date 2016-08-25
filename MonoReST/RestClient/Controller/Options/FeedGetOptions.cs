@@ -60,7 +60,7 @@ namespace Emc.Documentum.Rest.Net
         {
             get
             {
-                return (Boolean)pa[PARAM_INLINE];
+                return pa.ContainsKey(PARAM_INLINE) ? (Boolean)pa[PARAM_INLINE] : false;
             }
             set
             {
@@ -118,7 +118,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public String Sort
         {
-            get { return pa[PARAM_SORT].ToString();}
+            get { return pa.ContainsKey(PARAM_SORT) ? pa[PARAM_SORT].ToString() : null; }
             set {
                 if (!pa.ContainsKey(PARAM_SORT)) {
                     pa.Add(PARAM_SORT, value);
@@ -131,7 +131,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public String Filter
         {
-            get { return pa[PARAM_FILTER].ToString(); }
+            get { return pa.ContainsKey(PARAM_FILTER) ? pa[PARAM_FILTER].ToString() : null; }
             set
             {
                 if (!pa.ContainsKey(PARAM_FILTER))
@@ -150,7 +150,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public Int32 PageNumber 
         {
-            get { return (Int32)pa[PARAM_PAGE];}
+            get { return pa.ContainsKey(PARAM_PAGE) ? (Int32)pa[PARAM_PAGE] : 1;}
             set
             {
                 if (!pa.ContainsKey(PARAM_PAGE))
@@ -167,7 +167,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public Int32 ItemsPerPage
         {
-            get { return (Int32)pa[PARAM_ITEMS_PER_PAGE]; }
+            get { return pa.ContainsKey(PARAM_ITEMS_PER_PAGE) ? (Int32)pa[PARAM_ITEMS_PER_PAGE] : 100; }
             set
             {
                 if (!pa.ContainsKey(PARAM_ITEMS_PER_PAGE))
@@ -187,7 +187,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public Boolean IncludeTotal
         {
-            get { return (Boolean)pa[PARAM_INCLUDE_TOTAL]; }
+            get { return pa.ContainsKey(PARAM_INCLUDE_TOTAL) ? (Boolean)pa[PARAM_INCLUDE_TOTAL] : false; }
             set
             {
                 if (!pa.ContainsKey(PARAM_INCLUDE_TOTAL))
@@ -206,7 +206,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public Boolean Raw
         {
-            get { return (Boolean)pa[PARAM_RAW]; }
+            get { return pa.ContainsKey(PARAM_RAW) ? (Boolean) pa[PARAM_RAW] : false; }
             set
             {
                 if (!pa.ContainsKey(PARAM_RAW))
@@ -229,7 +229,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         public Boolean Recursive
         {
-            get { return (Boolean)pa[PARAM_RECURSIVE]; }
+            get { return pa.ContainsKey(PARAM_RECURSIVE) ? (Boolean)pa[PARAM_RECURSIVE] : false; }
             set
             {
                 if (!pa.ContainsKey(PARAM_RECURSIVE))

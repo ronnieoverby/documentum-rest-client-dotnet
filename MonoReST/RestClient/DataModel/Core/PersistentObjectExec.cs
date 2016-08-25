@@ -19,7 +19,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns Boolean value</returns>
         public bool CanUpdate()
         {
-            return LinkRelations.FindLinkAsString(this.Links, LinkRelations.EDIT.Rel) != null;
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.EDIT.Rel) != null;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns></returns>
         public bool CanDelete()
         {
-            return LinkRelations.FindLinkAsString(this.Links, LinkRelations.DELETE.Rel) != null;
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.DELETE.Rel) != null;
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Cabinet GetCabinet(SingleGetOptions options)
         {
             return Client.GetSingleton<Cabinet>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CABINET.Rel,
                 options);
         }
@@ -52,7 +52,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Folder GetParentFolder(SingleGetOptions options)
         {
             return Client.GetSingleton<Folder>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PARENT.Rel,
                 options);
         }
@@ -65,7 +65,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<FolderLink> GetFolderLinks(FeedGetOptions options)
         {
             return Client.GetFeed<FolderLink>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PARENT_LINKS.Rel,
                 options);
         }
@@ -80,7 +80,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
            
             return Client.Post<Folder, FolderLink>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PARENT_LINKS.Rel,
                 newObj,
                 options);
@@ -195,9 +195,9 @@ namespace Emc.Documentum.Rest.DataModel
             {
                 SingleGetOptions options = new SingleGetOptions { Links = true };
                 PersistentObject refreshed = Client.GetSingleton<PersistentObject>(this.Links, LinkRelations.SELF.Rel, options);
-                return refreshed.Links;
+                this.Links = refreshed.Links;
             }
-            else return this.Links;
+            return this.Links;
         }
     }
 }

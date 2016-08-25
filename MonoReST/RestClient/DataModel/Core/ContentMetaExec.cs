@@ -80,7 +80,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns></returns>
         public Stream DownloadContentMediaStream()
         {
-            string contentMediaUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.CONTENT_MEDIA.Rel);
+            string contentMediaUri = LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CONTENT_MEDIA.Rel);
             return Client.GetRaw(contentMediaUri);
         }
 
@@ -90,7 +90,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns></returns>
         public String GetMediaUri()
         {
-            return LinkRelations.FindLinkAsString(this.Links, LinkRelations.CONTENT_MEDIA.Rel);
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CONTENT_MEDIA.Rel);
         }
     }
 }

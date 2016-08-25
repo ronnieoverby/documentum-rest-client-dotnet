@@ -40,7 +40,7 @@ namespace AspNetWebFormsRestConsumer
                 {
                     lblError.Visible = true;
                     lblError.Text = "Is a path";
-                    Folder saveToFolder = repository.getOrCreateFolderByPath(txtPath.Text);
+                    Folder saveToFolder = repository.GetOrCreateFolderByPath(txtPath.Text);
 
                     if (!String.IsNullOrEmpty(fileToUpload.FileName))
                     {

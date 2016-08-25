@@ -25,7 +25,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             SetMediaUrlPolicy(options);
             return Client.GetFeed<T>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CONTENTS.Rel,
                 options);
         }
@@ -39,7 +39,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             SetMediaUrlPolicy(options);
             return Client.GetSingleton<ContentMeta>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PRIMARY_CONTENT.Rel,
                 options);
         }
@@ -89,7 +89,7 @@ namespace Emc.Documentum.Rest.DataModel
         public ContentMeta CreateContent(Stream contentStream, string mimeType, GenericOptions options)
         {
             return Client.Post<ContentMeta>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CONTENTS.Rel,
                 contentStream,
                 mimeType,
@@ -103,16 +103,13 @@ namespace Emc.Documentum.Rest.DataModel
         public string GetCheckedOutBy()
         {
             string checkedOutBy = "";
-            if (IsCheckedOut())
+            if (GetPropertyString("r_object_type").StartsWith("Process"))
             {
-                if (GetPropertyValue("r_object_type").ToString().StartsWith("Process"))
-                {
-                    checkedOutBy = GetPropertyValue("Process_lock_owner").ToString();
-                }
-                if (checkedOutBy.Equals(""))
-                {
-                    checkedOutBy = GetPropertyValue("r_lock_owner").ToString();
-                }
+                checkedOutBy = GetPropertyString("Process_lock_owner");
+            }
+            if (String.IsNullOrEmpty(checkedOutBy))
+            {
+                checkedOutBy = GetPropertyString("r_lock_owner");
             }
             return checkedOutBy;
         }
@@ -123,10 +120,10 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="options"></param>
         /// <returns></returns>
-        public Feed<T> GetVersionHistory<T>(FeedGetOptions options)
+        public Feed<T> GetAllVersions<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.VERSIONS.Rel,
                 options);
         }
@@ -139,7 +136,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document GetCurrentVersion(SingleGetOptions options)
         {
             return Client.GetSingleton<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CURRENT_VERSION.Rel,
                 options);
         }
@@ -152,7 +149,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document GetPredessorVersion(SingleGetOptions options)
         {
             return Client.GetSingleton<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PREDECESSOR_VERSION.Rel,
                 options);
         }
@@ -169,7 +166,7 @@ namespace Emc.Documentum.Rest.DataModel
             }
 
             return Client.Put<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKOUT.Rel,
                 null,
                 null);
@@ -184,7 +181,7 @@ namespace Emc.Documentum.Rest.DataModel
             if (IsCheckedOut())
             {
                 Client.Delete(
-                    this.Links,
+                    GetFullLinks(),
                     LinkRelations.CANCEL_CHECKOUT.Rel,
                     null);
             }
@@ -200,7 +197,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document CheckinMajor(Document newDoc, GenericOptions options)
         {
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_NEXT_MAJOR.Rel,
                 newDoc,
                 options);
@@ -215,7 +212,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document CheckinMinor(Document newDoc, GenericOptions options)
         {
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_NEXT_MINOR.Rel,
                 newDoc,
                 options);
@@ -230,7 +227,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document CheckinBranch(Document newDoc, GenericOptions options)
         {
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_BRANCH_VERSION.Rel,
                 newDoc,
                 options);
@@ -249,7 +246,7 @@ namespace Emc.Documentum.Rest.DataModel
             IDictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
             otherParts.Add(contentStream, mimeType);
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_NEXT_MAJOR.Rel,
                 newDoc,
                 otherParts,
@@ -278,7 +275,7 @@ namespace Emc.Documentum.Rest.DataModel
                 doc.Properties = doc.ChangedProperties;
             }
             retDoc = Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_NEXT_MINOR.Rel,
                 doc,
                 otherParts,
@@ -304,7 +301,7 @@ namespace Emc.Documentum.Rest.DataModel
             IDictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
             otherParts.Add(contentStream, mimeType);
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.CHECKIN_BRANCH_VERSION.Rel,
                 newDoc,
                 otherParts,
@@ -312,13 +309,12 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         /// <summary>
-        /// 
+        /// Check if the document is checked out
         /// </summary>
         /// <returns></returns>
         public bool IsCheckedOut()
         {
-            bool ret = !GetPropertyValue("r_lock_owner").Equals("");
-            return ret;
+            return !String.IsNullOrEmpty(GetCheckedOutBy());
         }
 
         /// <summary>
@@ -327,7 +323,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns></returns>
         public bool CanCheckout()
         {
-            return LinkRelations.FindLinkAsString(this.Links, LinkRelations.CHECKOUT.Rel) != null;
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CHECKOUT.Rel) != null;
         }
 
         /// <summary>
@@ -336,9 +332,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns></returns>
         public bool CanCheckin()
         {
-            return LinkRelations.FindLinkAsString(this.Links, LinkRelations.CHECKIN_NEXT_MAJOR.Rel) != null
-                || LinkRelations.FindLinkAsString(this.Links, LinkRelations.CHECKIN_NEXT_MINOR.Rel) != null
-                || LinkRelations.FindLinkAsString(this.Links, LinkRelations.CHECKIN_BRANCH_VERSION.Rel) != null;
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CHECKIN_NEXT_MAJOR.Rel) != null
+                || LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CHECKIN_NEXT_MINOR.Rel) != null
+                || LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.CHECKIN_BRANCH_VERSION.Rel) != null;
         }
 
         /// <summary>

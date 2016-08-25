@@ -21,7 +21,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetParentGroups<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.PARENT.Rel,
                 options);
         }
@@ -35,7 +35,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetSubGroups<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.GROUPS.Rel,
                 options);
         }
@@ -49,7 +49,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetGroupUsers<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.USERS.Rel,
                 options);
         }

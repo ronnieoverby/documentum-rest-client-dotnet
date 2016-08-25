@@ -12,43 +12,32 @@ using System.IO.Compression;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-    public partial class Repository 
+    /// <summary>
+    /// Version history type for auditting
+    /// </summary>
+    public enum HistoryType
     {
         /// <summary>
-        /// List all the versions of a document
+        /// All versions
         /// </summary>
-        /// <param name="doc"></param>
-        /// <returns>List</returns>
-        public List<Document> getAllDocumentVersions(Document doc)
-        {
+        FULLVERSIONTREE,
+        /// <summary>
+        /// Current version
+        /// </summary>
+        THISDOCUMENTONLY
+    }
 
-            List<Document> docVersions = new List<Document>();
-
-            Feed<Document> allVersions = ExecuteDQL<Document>(
-                String.Format("select * from {0}(all) where i_chronicle_id='{1}'",
-                doc.GetPropertyValue("r_object_type").ToString(),
-                doc.GetPropertyValue("i_chronicle_id").ToString()),
-                new FeedGetOptions { Inline = true, Links = true });
-            List<Entry<Document>> docEntries = allVersions.Entries;
-            foreach (Entry<Document> entry in docEntries)
-            {
-                Document vDoc = entry.Content;
-                Document fullDoc = _client.Get<Document>(vDoc.Links[0].Href, null);
-                fullDoc.SetClient(this.Client);
-                docVersions.Add(fullDoc);
-            }
-            return docVersions;
-        }
-
+    public partial class Repository 
+    {
         /// <summary>
         /// Default convenience version of getDocumentHistory that returns 10 audit entries per page by default.
         /// </summary>
         /// <param name="type"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public Feed<AuditEntry> getDocumentHistory(HistoryType type, PersistentObject obj)
+        public Feed<AuditEntry> GetAuditHistory(HistoryType type, PersistentObject obj)
         {
-            return getDocumentHistory(type, obj, 10);
+            return GetAuditHistory(type, obj, 10);
         }
 
         /// <summary>
@@ -58,7 +47,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="obj"></param>
         /// <param name="itemsPerPage"></param>
         /// <returns></returns>
-        public Feed<AuditEntry> getDocumentHistory(HistoryType type, PersistentObject obj, int itemsPerPage)
+        public Feed<AuditEntry> GetAuditHistory(HistoryType type, PersistentObject obj, int itemsPerPage)
         {
             String auditQueryAttribute = "";
             String id = "";
@@ -88,7 +77,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="path"></param>
         /// <param name="toCreate"></param>
         /// <returns>Folder</returns>
-        private Folder findExistingAndNonExistingFolders(String path, List<String> toCreate) 
+        private Folder FindExistingAndNonExistingFolders(String path, List<String> toCreate) 
         {
             //Break apart the path so we can check from the bottom up which folder(s) exist.
             String[] pathFragments = path.Split(new String[] { "/" }, StringSplitOptions.RemoveEmptyEntries);
@@ -105,7 +94,7 @@ namespace Emc.Documentum.Rest.DataModel
                     pathBuilder.Append("/").Append(lastFolder);
 
                 }
-                existingFolder = getFolderByQualification("dm_folder where any r_folder_path = '" + pathBuilder.ToString() + "'", null);
+                existingFolder = GetFolderByQualification("dm_folder where any r_folder_path = '" + pathBuilder.ToString() + "'", null);
                 if (existingFolder == null)
                 {
                     toCreate.Add(lastFolder);
@@ -126,7 +115,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="toCreate"></param>
         /// <param name="existingFolder"></param>
         /// <returns>Folder</returns>
-        private Folder createListOfFolders(bool createCabinet, List<String> toCreate, Folder existingFolder)
+        private Folder CreateListOfFolders(bool createCabinet, List<String> toCreate, Folder existingFolder)
         {
 
             // Reverse through the toAdd collection to create any folders that need creating
@@ -148,64 +137,18 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         /// <summary>
-        /// Delete all versions of a document
-        /// </summary>
-        /// <param name="doc"></param>
-
-        public void deleteAllDocumentVersions(Document doc)
-        {
-            GenericOptions options = new GenericOptions();
-            options.SetQuery("del-version", "all");
-            doc.Delete(options);
-        }
-
-        /// <summary>
-        /// Delete the current version of a document 
-        /// </summary>
-        /// <param name="doc"></param>
-        public void deleteCurrentDocumentVersion(Document doc)
-        {
-            GenericOptions options = new GenericOptions();
-            options.SetQuery("del-version", "selected");
-            doc.Delete(options);
-        }
-
-        /// <summary>
-        /// Delete a folder. If descending is true, all subfolders and contents will be
-        /// deleted as well. If allLinks is true, then if the folder or any of its contained
-        /// folders are also linked to other locations, the folder will be removed from those 
-        /// locations as well.
-        /// </summary>
-        /// <param name="folder"></param>
-        /// <param name="descending"></param>
-        /// <param name="allLinks">Specifies whether a multi-linked descendant is deleted
-        /// or unlinked from this specified folder. 
-        /// • true - This operation deletes a multi-linked descendant along with all its 
-        ///   folder links.
-        ///   • false - This operation only deletes a descendant’s link to this folder. 
-        ///   The descendant is still linked to other folders.
-        ///   </param>
-        public void deleteFolder(Folder folder, bool descending, bool allLinks)
-        {
-            GenericOptions options = new GenericOptions();
-            options.SetQuery("del-non-empty", descending);
-            options.SetQuery("del-all-links", allLinks);
-            folder.Delete(options);
-        }
-
-        /// <summary>
         /// Moves a document from orgin path to destination path given document's objectID
         /// </summary>
         /// <param name="objectId"></param>
         /// <param name="originPath"></param>
         /// <param name="destinationPath"></param>
         /// <returns>Bool</returns>
-        public bool moveDocument(string objectId, string originPath, string destinationPath)
+        public bool MoveDocument(string objectId, string originPath, string destinationPath)
         {
-            Folder origin = getFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", originPath), null);
-            Folder destination = getFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", destinationPath), null);
-            Document doc = getObjectById<Document>(objectId); // getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'", objectId), null);
-            return moveDocument(doc, origin, destination);
+            Folder origin = GetFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", originPath), null);
+            Folder destination = GetFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", destinationPath), null);
+            Document doc = GetSysObjectById<Document>(objectId); // getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'", objectId), null);
+            return MoveDocument(doc, origin, destination);
         }
 
         /// <summary>
@@ -218,14 +161,14 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="obj"></param>
         /// <param name="path"></param>
         /// <returns>FolderLink</returns>
-        public FolderLink linkToFolder<T>(T obj, String path)
+        public FolderLink LinkToFolder<T>(T obj, String path)
         {
-            Folder folder = getFolderByPath(path);
+            Folder folder = GetFolderByPath(path);
             if (folder == null)
             {
                 throw new Exception("No Such folder: " + path + " found");
             }
-            return linkToFolder(obj, folder);
+            return LinkToFolder(obj, folder);
         }
 
         /// <summary>
@@ -235,7 +178,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="obj"></param>
         /// <param name="folder"></param>
         /// <returns>Folderlink</returns>
-        public FolderLink linkToFolder<T>(T obj, Folder folder)
+        public FolderLink LinkToFolder<T>(T obj, Folder folder)
         {
             Folder hrefFolder = folder.CreateHrefObject<Folder>();
             String folderId = folder.GetPropertyValue("r_object_id").ToString();
@@ -253,13 +196,13 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="objectID"></param>
         /// <param name="destinationPath"></param>
         /// <returns>RestDocument</returns>
-        public Document copyDocument(string objectID, string destinationPath)
+        public Document CopyDocument(string objectID, string destinationPath)
         {
-            Document doc = getObjectById<Document>(objectID); // getDocumentByQualification("dm_document where r_object_id = '" + objectID + "'", null);
+            Document doc = GetSysObjectById<Document>(objectID); // getDocumentByQualification("dm_document where r_object_id = '" + objectID + "'", null);
 
-            Folder tempFolder = getOrCreateFolderByPath(destinationPath);
+            Folder tempFolder = GetOrCreateFolderByPath(destinationPath);
 
-            return copyDocument(doc, tempFolder);
+            return CopyDocument(doc, tempFolder);
         }
 
         /// <summary>
@@ -268,7 +211,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="doc"></param>
         /// <param name="destination"></param>
         /// <returns>RestDocument</returns>
-        public Document copyDocument(Document doc, Folder destination)
+        public Document CopyDocument(Document doc, Folder destination)
         {
             Document copyDoc = doc.CreateHrefObject<Document>();
             Document copiedDoc = destination.CreateSubObject<Document>(copyDoc, null);
@@ -284,7 +227,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="origin"></param>
         /// <param name="destination"></param>
         /// <returns>Bool</returns>
-        public bool moveDocument(Document doc, Folder origin, Folder destination) 
+        public bool MoveDocument(Document doc, Folder origin, Folder destination) 
         {
             bool ret = true;
             try
@@ -382,7 +325,7 @@ namespace Emc.Documentum.Rest.DataModel
 
         public Document ImportDocumentAsNewVersion(Document doc, Stream contentStream, String mimeType, GenericOptions checkinOptions)
         {
-            Feed<OutlineAtomContent> versions = doc.GetVersionHistory<OutlineAtomContent>(null);
+            Feed<OutlineAtomContent> versions = doc.GetAllVersions<OutlineAtomContent>(null);
             List<Entry<OutlineAtomContent>> entries = versions.Entries;
 
             // If the document is not already checked out, check it out.
@@ -410,7 +353,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>RestDocument</returns>
         public Document ImportDocumentAsNewVersion(string objectId, FileInfo file)
         {
-            Document doc = getObjectById<Document>(objectId); 
+            Document doc = GetSysObjectById<Document>(objectId); 
             return ImportDocumentAsNewVersion(doc, file);
             
         }
@@ -425,7 +368,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Document ImportNewDocument(FileInfo file, string documentName, string repositoryPath) {
             if (!repositoryPath.StartsWith("/")) throw new Exception("Repository path " + repositoryPath + " is not valid."
                  + " The path must be a fully qualified path");
-            Folder importFolder = getOrCreateFolderByPath(repositoryPath);
+            Folder importFolder = GetOrCreateFolderByPath(repositoryPath);
             if (importFolder == null) throw new Exception("Unable to fetch or create folder by path: " + repositoryPath);
 
             Document newDocument =  NewDocument(documentName, DocumentType);
@@ -452,7 +395,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             if (!repositoryPath.StartsWith("/")) throw new Exception("Repository path " + repositoryPath + " is not valid."
                  + " The path must be a fully qualified path");
-            Folder importFolder = getOrCreateFolderByPath(repositoryPath);
+            Folder importFolder = GetOrCreateFolderByPath(repositoryPath);
             if (importFolder == null) throw new Exception("Unable to fetch or create folder by path: " + repositoryPath);
             Document newDocument = NewDocument(documentName, DocumentType);
             GenericOptions importOptions = new GenericOptions();
@@ -503,7 +446,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             FeedGetOptions opts = new FeedGetOptions { Inline = true, Links = true};
             
-            Folder recordFolder = getFolderByPath("/SystemA File Plan/INC/" + type.ToString());
+            Folder recordFolder = GetFolderByPath("/SystemA File Plan/INC/" + type.ToString());
             string[] folderIds = folder.GetRepeatingValuesAsString("i_folder_id", ",").Split(new string[] {","}, StringSplitOptions.RemoveEmptyEntries);
             if(!folderIds.Contains(recordFolder.GetPropertyValue("r_object_id").ToString())) {
                 Folder linkFolder = recordFolder.CreateHrefObject<Folder>();
@@ -534,22 +477,22 @@ namespace Emc.Documentum.Rest.DataModel
             options.SetQuery("closeDate", closeDate);
             return Client.GetFeed<PersistentObject>(updateCloseDateUri, options);
         }
+
         /// <summary>
         /// Given a path, will create any folders in the path that do not exist, then return the 
         /// folder object for the path.
         /// </summary>
         /// <param name="path"></param>
         /// <returns>Folder</returns>
-        public Folder getOrCreateFolderByPath(String path)
+        public Folder GetOrCreateFolderByPath(String path)
         {
             // The list of folders that do not exist so we can create them
             List<String> toCreate = new List<String>();
-            Folder existingFolder = findExistingAndNonExistingFolders(path, toCreate);
+            Folder existingFolder = FindExistingAndNonExistingFolders(path, toCreate);
 
-            Boolean createCabinet = existingFolder == null? true: false;
-            existingFolder = createListOfFolders(createCabinet, toCreate, existingFolder);
+            Boolean createCabinet = existingFolder == null ? true : false;
+            existingFolder = CreateListOfFolders(createCabinet, toCreate, existingFolder);
             return existingFolder;
-        
         }
 
         /// <summary>
@@ -621,9 +564,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// </summary>
         /// <param name="path"></param>
         /// <returns>Folder</returns>
-        public Folder getFolderByPath(string path)
+        public Folder GetFolderByPath(string path)
         {
-            Folder folder = getFolderByQualification(
+            Folder folder = GetFolderByQualification(
                 String.Format("dm_folder where any r_folder_path = '{0}'", 
                 path), new FeedGetOptions { Inline = true, Links = true });
             return folder;
@@ -681,7 +624,7 @@ namespace Emc.Documentum.Rest.DataModel
                         {
                             SingleGetOptions options = new SingleGetOptions();
                             options.SetQuery("media-url-policy", "local");
-                            Document doc = getObjectById<Document>(obj.GetPropertyValue("r_object_id").ToString());// getDocumentByQualification("dm_document where r_object_id='" + obj.getAttributeValue("r_object_id") + "'", null);
+                            Document doc = GetSysObjectById<Document>(obj.GetPropertyValue("r_object_id").ToString());// getDocumentByQualification("dm_document where r_object_id='" + obj.getAttributeValue("r_object_id") + "'", null);
                             ContentMeta primaryContentMeta = doc.GetPrimaryContent(options);
                             FileInfo downloadedContentFile = primaryContentMeta.DownloadContentMediaFile();
                             // string path = "c:/temp/case" + obj.getAttributeValue("r_folder_path").ToString();
@@ -717,7 +660,7 @@ namespace Emc.Documentum.Rest.DataModel
                                 //zipPath = zipPath.Replace(@"/", @"\");
                                 //pathinzip = pathinzip.Substring(pathinzip.IndexOf(@"\") + 1);
                             }
-                            addFileToZipArchive(downloadedContentFile, zipPath, new FileInfo(zipFileName));
+                            AddFileToZipArchive(downloadedContentFile, zipPath, new FileInfo(zipFileName));
                             docProcessed++;
                         }
 
@@ -756,7 +699,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="fileToZip"></param>
         /// <param name="pathInZip"></param>
         /// <param name="zipArchive"></param>
-        public void addFileToZipArchive(FileInfo fileToZip, string pathInZip, FileInfo zipArchive)
+        public void AddFileToZipArchive(FileInfo fileToZip, string pathInZip, FileInfo zipArchive)
         {
             //Create Empty Archive
             using (ZipArchive archive = ZipFile.Open(zipArchive.FullName, ZipArchiveMode.Update))

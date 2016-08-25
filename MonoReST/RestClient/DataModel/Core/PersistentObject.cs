@@ -156,6 +156,17 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         /// <summary>
+        /// Get property value as string by name
+        /// </summary>
+        /// <param name="attributeName"></param>
+        /// <returns></returns>
+        public string GetPropertyString(string attributeName)
+        {
+            object value = _properties.ContainsKey(attributeName) ? _properties[attributeName] : null;
+            return value == null ? "" : value.ToString();
+        }
+
+        /// <summary>
         /// Get property repeating value as object on the specified index
         /// </summary>
         /// <param name="attribute"></param>

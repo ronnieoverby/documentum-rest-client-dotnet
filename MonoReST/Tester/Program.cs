@@ -20,18 +20,21 @@ namespace Emc.Documentum.Rest.Test
         private static string RestHomeUri = "#EXAMPLE: http://apps.company.com/dctm-rest/services):";
         private static string username = "#EXAMPLE: dmadmin";
         private static string password = "#EXAMPLE: MyS^p3Cc3P@55W0rd!";
-        private static RestController client;
         private static string repositoryName = "#EXAMPLE: CompanyDocbase";
         private static bool printResult = false;
-
         private static bool hasConfigInitialized = false;
+        private static RestController client;
+
         [STAThread]
         static void Main(string[] args)
         {
 
             Console.ForegroundColor = ConsoleColor.White;
-            // Console.BufferHeight = 360;
-            // Console.BufferHeight = 210;
+            Console.WindowWidth = 150;
+            Console.WindowHeight = 40;
+            Console.BufferWidth = 150;
+            Console.BufferHeight = 1000;
+
             NameValueCollection config = getDefaultConfiguration();
             bool useDefault = config != null && Boolean.Parse(config["useDefaults"]);
             SetupTestData(useDefault);
@@ -50,7 +53,7 @@ namespace Emc.Documentum.Rest.Test
                             string dql = cmd.ReadToEnd();
                             DqlQueryTest.Run(client, RestHomeUri, dql, itemsPerPage, pause, repositoryName, printResult);
                             break;
-                        case "test": // will run the conditions for Processdoc
+                        case "content": // will run the conditions for Processdoc
                             testProcessDocs();
                             break;
                         case "d2tests":
@@ -186,11 +189,11 @@ namespace Emc.Documentum.Rest.Test
             Console.WriteLine("\tdql [<itemsPerPage> <pauseBetweenPages>] <dqlQuery>" 
                             + "\n\t\t- Executes a DQL query and prints the results."
                             + "\n\t\t  Example: dql 10 false select * from dm_cabinet");
+            Console.WriteLine("\tcontent \n\t\t- Runs the end to end tests with optional tthreads and number of documents. "
+                + "\n\t\t  The old Processdoc command will do the same test.");
+            Console.WriteLine("\tsearch \n\t\t- Prompts for search criteria and location then runs the search query.");
             Console.WriteLine("\tgetmimetype <filename> \n\t\t- Returns the mimetype of the given fileName.");
             Console.WriteLine("\tgetformat <filename> \n\t\t- Returns the documentum format name of the given fileName.");
-            Console.WriteLine("\tsearch \n\t\t- Prompts for search criteria and location then runs the search query.");
-            Console.WriteLine("\ttest \n\t\t- Runs the end to end tests with optional tthreads and number of documents. "
-                            + "\n\t\t  The old Processdoc command will do the same test.");
             Console.WriteLine("\tcls \n\t\t- Clear the console");
             Console.WriteLine("\texit \n\t\t- Exit the Test");
             Console.Write("\r\n\nCommand > ");
@@ -206,7 +209,9 @@ namespace Emc.Documentum.Rest.Test
             while (!isInputValid )
             {
                 if (!String.IsNullOrEmpty(prompt)) Console.WriteLine(prompt);
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 line = Console.ReadLine();
+                Console.ForegroundColor = ConsoleColor.White;
                 if( String.IsNullOrEmpty(line) && defaultValue.StartsWith("#EXAMPLE: ") || line.StartsWith("#EXAMPLE: ") )
                 {
                     Console.WriteLine("\nInvalid input, value should not start with \"#EXAMPLE: \"");
@@ -250,6 +255,8 @@ namespace Emc.Documentum.Rest.Test
                 validateConfig();
                 if (hasConfigInitialized)
                 {
+                    Console.Write("Used default settings. ");
+                    printConfiguration();
                     setupClient();
                     return;
                 }
@@ -264,7 +271,6 @@ namespace Emc.Documentum.Rest.Test
                 }
                 else
                 {
-
                     readSetupParameters(RestHomeUri, username, password, repositoryName, printResult.ToString());
                     hasConfigInitialized = true;
                     Console.Write("Re-configuration completed. ");
@@ -322,29 +328,29 @@ namespace Emc.Documentum.Rest.Test
         private static void printConfiguration()
         {
             Console.WriteLine("Please review your settings below:\r\n");
-            Console.WriteLine("\tHome document URL \t[" + RestHomeUri + "]");
-            Console.WriteLine("\tUser login name \t[" + username + "]");
-            Console.WriteLine("\tRepository name \t[" + repositoryName + "]");
-            Console.WriteLine("\tPrint the result? \t[" + printResult + "]\r\n");
+            Console.WriteLine("\tHome document URL:\t [" + RestHomeUri + "]");
+            Console.WriteLine("\tUser login name:\t [" + username + "]");
+            Console.WriteLine("\tRepository name:\t [" + repositoryName + "]");
+            Console.WriteLine("\tPrint the result?\t [" + printResult + "]\r\n");
         }
 
         public static void readSetupParameters(string defaultRestHomeUri, string defaultUsername, string defaultPassword,
             string defaultRepositoryName, string defaultPrintResult)
         {
-            RestHomeUri = getLineOfInput("Set the home document URL [" + defaultRestHomeUri + "] :", defaultRestHomeUri);
+            RestHomeUri = getLineOfInput("Set the home document URL: [" + defaultRestHomeUri + "]", defaultRestHomeUri);
             if (String.IsNullOrEmpty(RestHomeUri)) RestHomeUri = defaultRestHomeUri;
 
-            username = getLineOfInput("Set the username [" + defaultUsername + "] :", defaultUsername);
+            username = getLineOfInput("Set the username: [" + defaultUsername + "]", defaultUsername);
             if (String.IsNullOrEmpty(username)) username = defaultUsername;
 
 
-            password = getLineOfHiddenInput("Set the user password [**********] :",defaultPassword);
+            password = getLineOfHiddenInput("Set the user password: [**********]",defaultPassword);
             if (String.IsNullOrEmpty(password)) password = defaultPassword;
 
-            repositoryName = getLineOfInput("Set the repository name [" + defaultRepositoryName + "] :", defaultRepositoryName);
+            repositoryName = getLineOfInput("Set the repository name: [" + defaultRepositoryName + "]", defaultRepositoryName);
             if (String.IsNullOrEmpty(repositoryName)) repositoryName = defaultRepositoryName;
 
-            string input = getLineOfInput("Whether to print the result [" + defaultPrintResult + "] :", defaultPrintResult);
+            string input = getLineOfInput("Whether to print the result? [" + defaultPrintResult + "]", defaultPrintResult);
             printResult = String.IsNullOrEmpty(input) ? Boolean.Parse(defaultPrintResult) : Boolean.Parse(input);
         }
     }

@@ -137,12 +137,12 @@ namespace Emc.Documentum.Rest.DataModel
 
 
         /// <summary>
-        ///  Executes a Full Text Query against this repository
+        ///  Executes a Full Text Query against this repository with simple search language
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="search"></param>
         /// <returns>Feed</returns>
-        public Feed<T> ExecuteSearch<T>(SearchOptions search)
+        public Feed<T> ExecuteSimpleSearch<T>(SearchOptions search)
         {
             decimal count = 0;
             double pageCount = 0;
@@ -170,7 +170,7 @@ namespace Emc.Documentum.Rest.DataModel
             {
                 foreach (Entry<T> entry in feed.Entries)
                 {
-                    entry.Content = getObjectByQualification<T>(String.Format("dm_sysobject where r_object_id='{0}'", entry.Id.ToString()), null);
+                    entry.Content = GetObjectByQualification<T>(String.Format("dm_sysobject where r_object_id='{0}'", entry.Id.ToString()), null);
                 }
             }
 
@@ -184,29 +184,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="dql"></param>
         /// <param name="options"></param>
         /// <returns>Folder</returns>
-        public Folder getFolderByQualification(string dql, FeedGetOptions options)
+        public Folder GetFolderByQualification(string dql, FeedGetOptions options)
         {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null ? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<Folder> feed = this.Client.Get<Feed<Folder>>(dqlUriWithoutTemplateParams, pa);
-
-            List<Entry<Folder>> folders = feed == null ? new List<Entry<Folder>>() : feed.Entries;
-            if (folders.Count == 0)
-            {
-                return null;
-            }
-            else
-            {
-                string folderId = folders[0].Content.GetPropertyValue("r_object_id").ToString();
-                Folder folder = getObjectById<Folder>(folderId);
-                //Folder folder =  _client.Get<Folder>(folders[0].Content.Links[0].Href);
-                folder.SetClient(this.Client);
-                return folder;
-            }
-
+            return GetObjectByQualification<Folder>(dql, options);
         }
 
         /// <summary>
@@ -215,73 +195,71 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="dql"></param>
         /// <param name="options"></param>
         /// <returns>RestDocument</returns>
-        public Document getDocumentByQualification(string dql, FeedGetOptions options)
+        public Document GetDocumentByQualification(string dql, SingleGetOptions options)
         {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null ? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<Document> feed = this.Client.Get<Feed<Document>>(dqlUriWithoutTemplateParams, pa);
-
-            List<Entry<Document>> docs = (List<Entry<Document>>)feed.Entries;
-            if (docs.Count == 0)
-            {
-                return null;
-            }
-            else
-            {
-                Document doc = _client.Get<Document>(docs[0].Content.Links[0].Href, null);
-                if (doc != null) doc.SetClient(this.Client);
-                return doc;
-            }
-
+            return GetObjectByQualification<Document>(dql, options);
         }
 
-        public T getObjectById<T>(string objectId) where T : PersistentObject
+        /// <summary>
+        /// Get sysobject by ID.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="objectId"></param>
+        /// <returns></returns>
+        public T GetSysObjectById<T>(string objectId) where T : PersistentObject
         {
             SingleGetOptions options = new SingleGetOptions { Links = true };
-            return getObjectById<T>(objectId, options);
+            return GetSysObjectById<T>(objectId, options);
         }
 
-        public T getObjectById<T>(string objectId, SingleGetOptions options) where T : PersistentObject
+        /// <summary>
+        /// Get sysobject by object ID
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="objectId"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T GetSysObjectById<T>(string objectId, SingleGetOptions options) where T : PersistentObject
         {
-            return null;
-            //todo
-            // Client.GetObjectById<T>(objectId, options);
+            return GetObjectByQualification<T>(String.Format("dm_sysobject where r_object_id='{0}'", objectId), options);
         }
 
-        public PersistentObject getObjectByQualification(string dql, FeedGetOptions options)
+        /// <summary>
+        /// Get object by dql qualification
+        /// </summary>
+        /// <param name="dql"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public PersistentObject GetObjectByQualification(string dql, SingleGetOptions options)
         {
-            return getObjectByQualification<PersistentObject>(dql, options);
+            return GetObjectByQualification<PersistentObject>(dql, options);
         }
 
-        public T getObjectByQualification<T>(string dql, FeedGetOptions options)
+        /// <summary>
+        /// Get object by dql qualification
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="dql"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T GetObjectByQualification<T>(string dql, SingleGetOptions options)
         {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null ? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<PersistentObject> feed = this.Client.Get<Feed<PersistentObject>>(dqlUriWithoutTemplateParams, pa);
-
-            List<Entry<PersistentObject>> objects = (List<Entry<PersistentObject>>)feed.Entries;
-            if (objects.Count == 0)
+            dql = "select r_object_id from " + dql;
+            Feed<PersistentObject> feed = ExecuteDQL<PersistentObject>(dql, new FeedGetOptions { Inline = false });
+            if (feed.Entries == null || feed.Entries.Count == 0)
             {
                 return default(T);
             }
-            else
+            if (feed.Entries.Count > 1)
             {
-                T obj = _client.Get<T>(objects[0].Content.Links[0].Href, null);
-                if (obj != null) (obj as Executable).SetClient(Client);
-                return obj;
+                throw new Exception("The qualification '" + dql + "' has more than one object in repository.");
             }
-
+            return Client.GetSingleton<T>(feed.Entries[0].Links, LinkRelations.EDIT.Rel, options);
         }
 
         private string _cabinetType = "dm_cabinet";
         /// <summary>
-        /// When creating a new cabinet object, this will be the object type used.
+        /// When creating a new cabinet object, this will be the object type used. Defaults to 'dm_cabinet'.
         /// </summary>
         private string CabinetType
         {
@@ -290,6 +268,9 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         private string _documentType = "dm_document";
+        /// <summary>
+        /// When creating a new document object, this will be the object type used. Defaults to 'dm_document'.
+        /// </summary>
         public string DocumentType
         {
             get { return _documentType; }
@@ -298,7 +279,7 @@ namespace Emc.Documentum.Rest.DataModel
 
         private string _folderType = "dm_folder";
         /// <summary>
-        /// When creating a folder object, this will be the default type used.
+        /// When creating a folder object, this will be the default type used. Defaults to 'dm_folder'.
         /// </summary>
         public string FolderType
         {

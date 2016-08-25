@@ -59,7 +59,6 @@
     <Compile Include="DataModel\Core\FolderExec.cs" />
     <Compile Include="DataModel\Core\FolderLinkExec.cs" />
     <Compile Include="DataModel\Core\GroupExec.cs" />
-    <Compile Include="DataModel\Core\HistoryType.cs" />
     <Compile Include="DataModel\Core\PersistentObjectExec.cs" />
     <Compile Include="DataModel\Core\RepositoryAdvanced.cs" />
     <Compile Include="DataModel\Core\RepositoryExec.cs" />

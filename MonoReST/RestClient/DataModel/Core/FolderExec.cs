@@ -15,30 +15,12 @@ namespace Emc.Documentum.Rest.DataModel
     public partial class Folder
     {
         /// <summary>
-        /// Whether the folder can be updated
-        /// </summary>
-        /// <returns>Returns Boolean value</returns>
-        public new bool CanUpdate()
-        {
-            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.EDIT.Rel) != null;
-        }
-
-        /// <summary>
-        /// Whether the folder can be deleted
-        /// </summary>
-        /// <returns>Returns Boolean value</returns>
-        public new bool CanDelete()
-        {
-            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.DELETE.Rel) != null;
-        }
-
-        /// <summary>
         /// Whether the folder has parent folders
         /// </summary>
         /// <returns>Returns Boolean value</returns>
         public bool HasParent()
         {
-            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.PARENT.Rel) != null;
+            return LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.PARENT.Rel) != null;
         }
 
         /// <summary>
@@ -50,7 +32,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetFolders<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.FOLDERS.Rel,
                 options);
         }
@@ -64,7 +46,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetDocuments<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
                 options);
         }
@@ -77,7 +59,7 @@ namespace Emc.Documentum.Rest.DataModel
         public new Cabinet GetCabinet(SingleGetOptions options)
         {
             return Client.GetSingleton<Cabinet>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.CABINET.Rel,
                 options);
         }
@@ -90,7 +72,7 @@ namespace Emc.Documentum.Rest.DataModel
         public new Folder GetParentFolder(SingleGetOptions options)
         {
             return Client.GetSingleton<Folder>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.PARENT.Rel,
                 options);
         }
@@ -105,7 +87,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             if (newObj.Client == null) newObj.SetClient(this.Client);
             return Client.Post<Folder>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.FOLDERS.Rel,
                 newObj,
                 options);
@@ -122,7 +104,7 @@ namespace Emc.Documentum.Rest.DataModel
             if (newObj.Client == null) newObj.SetClient(this.Client);
 
             return Client.Post<Document>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
                 newObj,
                 options);
@@ -138,7 +120,7 @@ namespace Emc.Documentum.Rest.DataModel
         public T CreateSubObject<T>(T newObj, GenericOptions options) where T : PersistentObject
         {
             return Client.Post<T>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.OBJECTS.Rel,
                 newObj,
                 options);
@@ -157,7 +139,7 @@ namespace Emc.Documentum.Rest.DataModel
             Dictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
             otherParts.Add(otherPartStream, otherPartMime);
             return Client.Post<Document>(
-                this.Links,
+                GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
                 newObj,
                 otherParts,
@@ -196,7 +178,7 @@ namespace Emc.Documentum.Rest.DataModel
         public FolderLink LinkFrom(Document newObj, GenericOptions options)
         {
             return Client.Post<Document, FolderLink>(
-                this.GetFullLinks(),
+                GetFullLinks(),
                 LinkRelations.CHILD_LINKS.Rel,
                 newObj,
                 options);
