@@ -11,7 +11,7 @@ namespace Emc.Documentum.Rest.DataModel
 {
 
     /// <summary>
-    /// Entryp for Link
+    /// Link model
     /// </summary>
     [DataContract(Name = "link", Namespace = "http://identifiers.emc.com/vocab/documentum")]
     [ClassInterface(ClassInterfaceType.AutoDual)]

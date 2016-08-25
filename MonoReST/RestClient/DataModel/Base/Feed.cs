@@ -11,32 +11,47 @@ using System.Runtime.InteropServices;
 namespace Emc.Documentum.Rest.DataModel
 {
     /// <summary>
-    /// Entry point to the datacontract
+    /// Feed model
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [DataContract(Name = "feed", Namespace = "http://www.w3.org/2005/Atom")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class Feed<T> : Linkable, Executable
+    public class Feed<T> : ExecLinkable
     {
+        /// <summary>
+        /// Feed id
+        /// </summary>
         [DataMember(Name = "id")]
         public string Id { get; set; }
 
+        /// <summary>
+        /// Feed title
+        /// </summary>
         [DataMember(Name = "title")]
         public string Title { get; set; }
 
+        /// <summary>
+        /// Feed updated
+        /// </summary>
         [DataMember(Name = "updated")]
         public string Updated { get; set; }
 
+        /// <summary>
+        /// Total number of entries at server side
+        /// </summary>
         [DataMember(Name = "total")]
         public int Total { get; set; }
 
+        /// <summary>
+        /// The number of page
+        /// </summary>
         [DataMember(Name = "pageCount")]
         public double PageCount { get; set; }
 
         private List<Author> _authors = new List<Author>();
       
         /// <summary>
-        /// List entry for Authors
+        /// Feed authors
         /// </summary>
         [DataMember(Name = "author")]
         public List<Author> Authors
@@ -55,7 +70,7 @@ namespace Emc.Documentum.Rest.DataModel
             }
         }
         /// <summary>
-        /// Entry for List of entries
+        /// List of entries
         /// </summary>
         private List<Entry<T>> _entries = new List<Entry<T>>();
         [DataMember(Name = "entries")]
@@ -73,18 +88,6 @@ namespace Emc.Documentum.Rest.DataModel
             {
                 _entries = value;
             }
-        }
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
         }
 
         /// <summary>
@@ -129,7 +132,7 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         /// <summary>
-        /// Get current page feed
+        /// Re-get current page feed
         /// </summary>
         /// <returns></returns>
         public Feed<T> CurrentPage()
@@ -184,29 +187,36 @@ namespace Emc.Documentum.Rest.DataModel
                 Emc.Documentum.Rest.Http.Utility.LinkRelations.PAGING_LAST.Rel,
                 null);
         }
-
-        public override string ToString()
-        {
-            JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
-            return serializer.Serialize(this);
-        }
     }
 
     /// <summary>
-    /// Entryp point for Author
+    /// Entry point for Author
     /// </summary>
     [DataContract(Name = "author", Namespace = "http://www.w3.org/2005/Atom")]
     public class Author
     {
+        /// <summary>
+        /// Author name
+        /// </summary>
         [DataMember(Name = "name")]
         public string Name { get; set; }
 
+        /// <summary>
+        /// Author url
+        /// </summary>
         [DataMember(Name = "url")]
         public string Url { get; set; }
 
+        /// <summary>
+        /// Author email
+        /// </summary>
         [DataMember(Name = "email")]
         public string Email { get; set; }
 
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();

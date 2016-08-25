@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -53,7 +53,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataModel\C2View.cs" />
+    <Compile Include="DataModel\Base\ExecLinkable.cs" />
+    <Compile Include="DataModel\Core\ContentMetaExec.cs" />
+    <Compile Include="DataModel\Core\DocumentExec.cs" />
+    <Compile Include="DataModel\Core\FolderExec.cs" />
+    <Compile Include="DataModel\Core\FolderLinkExec.cs" />
+    <Compile Include="DataModel\Core\GroupExec.cs" />
+    <Compile Include="DataModel\Core\HistoryType.cs" />
+    <Compile Include="DataModel\Core\PersistentObjectExec.cs" />
+    <Compile Include="DataModel\Core\RepositoryAdvanced.cs" />
+    <Compile Include="DataModel\Core\RepositoryExec.cs" />
+    <Compile Include="DataModel\Core\UserExec.cs" />
+    <Compile Include="DataModel\D2\C2View.cs" />
     <Compile Include="DataModel\D2\C2ViewEntry.cs" />
     <Compile Include="DataModel\D2\C2Views.cs" />
     <Compile Include="DataModel\D2\D2Configuration.cs" />
@@ -63,9 +74,11 @@
     <Compile Include="DataModel\D2\D2Tasks.cs" />
     <Compile Include="DataModel\D2\ProfileConfiguration.cs" />
     <Compile Include="DataModel\D2\ProfileConfigurations.cs" />
+    <Compile Include="DataModel\D2\D2Repository.cs" />
     <Compile Include="DataModel\D2\SearchConfigurations.cs" />
     <Compile Include="DataModel\D2\SearchConfiguration.cs" />
-    <Compile Include="DataModel\RestDocument.cs" />
+    <Compile Include="DataModel\Core\Document.cs" />
+    <Compile Include="DataModel\Start\HomeDocumentExec.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controller\Utility\LinkRelations.cs" />
     <Compile Include="Controller\Json\AbstractSerializer.cs" />
@@ -73,9 +86,8 @@
     <Compile Include="Controller\Json\JsonDotnetJsonSerializer.cs" />
     <Compile Include="Controller\Net\RestController.cs" />
     <Compile Include="Controller\Options\FeedGetOptions.cs" />
-    <Compile Include="Controller\Options\FullTextQueryOptions.cs" />
+    <Compile Include="Controller\Options\SearchOptions.cs" />
     <Compile Include="Controller\Options\GenericOptions.cs" />
-    <Compile Include="Controller\Options\Search.cs" />
     <Compile Include="Controller\Options\SingleGetOptions.cs" />
     <Compile Include="Controller\Utility\AtomUtil.cs" />
     <Compile Include="Controller\Utility\HttpUtil.cs" />
@@ -83,33 +95,29 @@
     <Compile Include="Controller\Utility\MimeMapping.cs" />
     <Compile Include="Controller\Utility\ObjectUtil.cs" />
     <Compile Include="Controller\Utility\UriUtil.cs" />
-    <Compile Include="DataModel\AuditEntry.cs" />
-    <Compile Include="DataModel\Cabinet.cs" />
-    <Compile Include="DataModel\ContentMeta.cs" />
-    <Compile Include="DataModel\EmailPackage.cs" />
-    <Compile Include="DataModel\Entry.cs" />
-    <Compile Include="DataModel\Executable.cs" />
-    <Compile Include="DataModel\Feed.cs" />
-    <Compile Include="DataModel\Folder.cs" />
-    <Compile Include="DataModel\FolderLink.cs" />
-    <Compile Include="DataModel\Link.cs" />
-    <Compile Include="DataModel\Linkable.cs" />
-    <Compile Include="DataModel\NotUsed\BatchOperation.cs" />
-    <Compile Include="DataModel\NotUsed\Group.cs" />
-    <Compile Include="DataModel\NotUsed\User.cs" />
-    <Compile Include="DataModel\PersistentObject.cs" />
-    <Compile Include="DataModel\ProductInfo.cs" />
-    <Compile Include="DataModel\Repository.cs" />
-    <Compile Include="DataModel\ReSTService.cs" />
-    <Compile Include="DataModel\SearchEntry.cs" />
-    <Compile Include="DataModel\SearchFeed.cs" />
+    <Compile Include="DataModel\Custom\AuditEntry.cs" />
+    <Compile Include="DataModel\Core\Cabinet.cs" />
+    <Compile Include="DataModel\Core\ContentMeta.cs" />
+    <Compile Include="DataModel\Custom\EmailPackage.cs" />
+    <Compile Include="DataModel\Base\Entry.cs" />
+    <Compile Include="DataModel\Base\Executable.cs" />
+    <Compile Include="DataModel\Base\Feed.cs" />
+    <Compile Include="DataModel\Core\Folder.cs" />
+    <Compile Include="DataModel\Core\FolderLink.cs" />
+    <Compile Include="DataModel\Base\Link.cs" />
+    <Compile Include="DataModel\Base\Linkable.cs" />
+    <Compile Include="DataModel\Core\BatchOperation.cs" />
+    <Compile Include="DataModel\Core\Group.cs" />
+    <Compile Include="DataModel\Core\User.cs" />
+    <Compile Include="DataModel\Core\PersistentObject.cs" />
+    <Compile Include="DataModel\Core\ProductInfo.cs" />
+    <Compile Include="DataModel\Core\Repository.cs" />
+    <Compile Include="DataModel\Start\HomeDocument.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <None Include="libs\Newtonsoft.Json.dll" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="CustomModel\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

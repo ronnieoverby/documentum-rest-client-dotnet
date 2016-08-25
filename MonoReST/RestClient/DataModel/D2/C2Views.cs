@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "c2-views", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public class C2Views : Linkable, Executable
+    public class C2Views : ExecLinkable
     {
         [DataMember(Name = "id")]
         public String id { get; set; }
@@ -68,20 +68,5 @@ namespace Emc.Documentum.Rest.DataModel.D2
                 _entries = value;
             }
         }
-
-
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
     }
 }

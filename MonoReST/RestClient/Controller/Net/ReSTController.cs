@@ -16,6 +16,9 @@ using System.Runtime.InteropServices;
 
 namespace Emc.Documentum.Rest.Net
 {
+    /// <summary>
+    /// REST client controller to manage the resource CRUD with web client.
+    /// </summary>
     [ClassInterface(ClassInterfaceType.AutoDual)]
     public class RestController : IDisposable
     {
@@ -26,15 +29,23 @@ namespace Emc.Documentum.Rest.Net
         private String USER_AGENT_NAME = "DCTMRestDotNet";
         private AbstractJsonSerializer _jsonSerializer;
         private string _userName;
-        
-        //TODO: Change to an interface
-        public LoggerFacade Logger { get; set; }
         // Disposable.
         private bool _disposed;
 
-        public string RepositoryBaseUri {
-            get;
-            set; }
+        //TODO: Change to an interface
+        /// <summary>
+        /// Logger for the rest client
+        /// </summary>
+        public LoggerFacade Logger { get; set; }
+        
+        /// <summary>
+        /// Repository resource URI
+        /// </summary>
+        public string RepositoryBaseUri { get; set; }
+
+        /// <summary>
+        /// User login name
+        /// </summary>
         public string UserName 
         {
             get { 
@@ -43,14 +54,16 @@ namespace Emc.Documentum.Rest.Net
             }
         }
 
-        public void setUserAgentName(String name)
-        {
-            USER_AGENT_NAME = name;
-        }
-
-        public String getUserAgentName()
-        {
-            return USER_AGENT_NAME;
+        /// <summary>
+        /// User agent client name
+        /// </summary>
+        public string UserAgentName {
+            get {
+                return USER_AGENT_NAME;
+            }
+            set {
+                USER_AGENT_NAME = value;
+            }
         }
 
         /// <summary>
@@ -59,7 +72,7 @@ namespace Emc.Documentum.Rest.Net
         /// </summary>
         /// <param name="userName"></param>
         /// <param name="password"></param>
-        /// <param name="applicationUser"></param>
+        /// <param name="logger"></param>
         public RestController(string userName, string password, LoggerFacade logger)
         {
             //TODO: Change logger to an interface.
@@ -67,8 +80,8 @@ namespace Emc.Documentum.Rest.Net
             // Default of 5 minutes for a http response timeout.
             if (userName == null || userName.Trim().Equals(""))
             {
-                initClient(5);
-            } else initClient(userName, password, 5);
+                InitClient(5);
+            } else InitClient(userName, password, 5);
         }
 
         /// <summary>
@@ -83,7 +96,7 @@ namespace Emc.Documentum.Rest.Net
             if ( String.IsNullOrWhiteSpace(userName) || (password == null))
             {
                 throw new ArgumentNullException("Username and password are required for basic authentication.");
-            } else initClient(userName, password, 5);
+            } else InitClient(userName, password, 5);
         }
 
         /// <summary>
@@ -101,10 +114,10 @@ namespace Emc.Documentum.Rest.Net
         /// <param name="timeOutMinutes"></param>
         public RestController(int timeOutMinutes)
         {
-            initClient(timeOutMinutes);
+            InitClient(timeOutMinutes);
         }
 
-        private void initClient(HttpClient httpClient, int timeOutMinutes) 
+        private void InitClient(HttpClient httpClient, int timeOutMinutes) 
         {
             this._httpClient = httpClient;
             JSON_GENERIC_MEDIA_TYPE = new MediaTypeWithQualityHeaderValue("application/*+json");
@@ -112,14 +125,7 @@ namespace Emc.Documentum.Rest.Net
             _httpClient.Timeout = new TimeSpan(0, timeOutMinutes, 0);
         }
 
-        /// <summary>
-        /// Init the Client
-        /// </summary>
-        /// <param name="userName"></param
-        /// <param name="password"></param>
-        /// <param name="applicationUser"></param>
-        /// <param name="timeOutMinutes"></param>
-        private void initClient(string userName, string password, int timeOutMinutes)
+        private void InitClient(string userName, string password, int timeOutMinutes)
         {
             HttpClientHandler httpClientHandler = new HttpClientHandler();
             _authorizationHeader = "Basic " + Convert.ToBase64String(Encoding.GetEncoding(0).GetBytes(userName + ":" + password));
@@ -130,7 +136,7 @@ namespace Emc.Documentum.Rest.Net
             _httpClient.Timeout = new TimeSpan(0, timeOutMinutes, 0);
         }
 
-        private void initClient(int timeOutMinutes)
+        private void InitClient(int timeOutMinutes)
         {
             HttpClientHandler httpClientHandler = new HttpClientHandler();
             httpClientHandler.UseDefaultCredentials = true; // Kerberos with fallback to NTLM?
@@ -140,11 +146,7 @@ namespace Emc.Documentum.Rest.Net
             _httpClient.Timeout = new TimeSpan(0, timeOutMinutes, 0);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="request"></param>
-        public void SetBasicAuthHeader(HttpRequestMessage request)
+        private void SetBasicAuthHeader(HttpRequestMessage request)
         {
             if (this._authorizationHeader != null)
                 request.Headers.Add("Authorization", this._authorizationHeader);
@@ -159,7 +161,7 @@ namespace Emc.Documentum.Rest.Net
             {
                 if (_jsonSerializer == null)
                 {
-                    _jsonSerializer = new JsonDotnetJsonSerializer();//new DefaultDataContractJsonSerializer();
+                    _jsonSerializer = new JsonDotnetJsonSerializer();
                 }
                 return _jsonSerializer;
             }
@@ -170,11 +172,82 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// Get the HTTP request message
+        /// Start the REST call from home document resource
         /// </summary>
-        /// <param name="uri"></param>
-        /// <returns>Returns the HTTP Request Message with headers attached</returns>
-        private HttpRequestMessage getGetRequest(String uri)
+        /// <param name="RestHomeUri"></param>
+        /// <returns></returns>
+        public HomeDocument Start(string RestHomeUri)
+        {
+            return Get<HomeDocument>(RestHomeUri, null);
+        }
+
+        /// <summary>
+        /// Gets a feed
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="links"></param>
+        /// <param name="rel"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public Feed<T> GetFeed<T>(List<Link> links, string rel, FeedGetOptions options)
+        {
+            string followingUri = LinkRelations.FindLinkAsString(
+                links,
+                rel);
+            Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
+            if (feed != null) feed.Client = this;
+            return feed;
+        }
+
+        /// <summary>
+        /// Gets a feed
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="followingUri"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public Feed<T> GetFeed<T>(String followingUri, FeedGetOptions options)
+        {
+            Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
+            if (feed != null) feed.Client = this;
+            return feed;
+        }
+
+        /// <summary>
+        /// Gets a single object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="links"></param>
+        /// <param name="rel"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T GetSingleton<T>(List<Link> links, string rel, SingleGetOptions options)
+        {
+            string followingUri = LinkRelations.FindLinkAsString(
+                links,
+                rel);
+            T result = this.Get<T>(followingUri, options == null ? null : options.ToQueryList());
+            if (result != null) (result as Executable).SetClient(this);
+            return result;
+        }
+
+        /// <summary>
+        /// Find 'self' link relation
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="links"></param>
+        /// <returns></returns>
+        public T Self<T>(List<Link> links)
+        {
+            string followingUri = LinkRelations.FindLinkAsString(
+                links,
+                LinkRelations.SELF.Rel);
+            T result = this.Get<T>(followingUri, null);
+            if (result != null) (result as Executable).SetClient(this);
+            return result;
+        }
+
+        private HttpRequestMessage CreateGetRequest(String uri)
         {
             HttpRequestMessage request = null;
             try
@@ -191,35 +264,6 @@ namespace Emc.Documentum.Rest.Net
             return request;
         }
 
-        private void logPerformance(long time, string type, string uri, long requestSize, long responseSize)
-        {
-            long overThreshold = 80L;
-            long transactionSize = requestSize + responseSize;
-            
-            switch (type)
-            {
-                case "GET":
-                    overThreshold = 100L;
-                    break;
-                case "POST":
-                    overThreshold = 1000L;
-                    break;
-                case "PUT":
-                    overThreshold = 1000L;
-                    break;
-
-
-            }
-
-            string timeState = "NORMAL";
-            if (time > overThreshold)
-            {
-                timeState = "SLOW";
-            }
-            WriteToLog(LogLevel.DEBUG, timeState, time + "ms|TotalSize:" + transactionSize
-                    + "|RequestSize:" + requestSize + "|ResponseSize:" + responseSize + "|" + uri, type);
-        }
-
         /// <summary>
         /// Performs a Async GET an Async GET against the URI given with the query/package passed
         /// </summary>
@@ -234,14 +278,14 @@ namespace Emc.Documentum.Rest.Net
             {
                 uri = UriUtil.BuildUri(uri, query);
                 HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-                HttpRequestMessage request = getGetRequest(uri);
+                HttpRequestMessage request = CreateGetRequest(uri);
                 Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
                 long tStart = DateTime.Now.Ticks;
                 HttpResponseMessage message = response.Result;
                 long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                 long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                 long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                 if (message.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     WriteToLog(LogLevel.ERROR, this.GetType().Name, "||" + uri, new Exception("AUTHENTICATION"));
@@ -267,14 +311,19 @@ namespace Emc.Documentum.Rest.Net
         /// <summary>
         /// Does a raw get using a URI and returns the result as a Stream.
         /// </summary>
-        /// <param name="uri"></param>
-        /// <returns></returns>
+        /// <param name="uri">Request URI</param>
+        /// <param name="useAuthentication">Indicates whether to authenticate the request</param>
+        /// <returns>Response body as stream</returns>
         public Stream GetRaw(string uri, bool useAuthentication)
         {
             Stream stream = null;
             try
             {
-                HttpRequestMessage request = getGetRequest(uri);
+                HttpRequestMessage request = CreateGetRequest(uri);
+                if (!useAuthentication)
+                {
+                    request.Headers.Remove("Authorization");
+                }
 
                 HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
                 Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
@@ -283,7 +332,7 @@ namespace Emc.Documentum.Rest.Net
                 long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                 long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                 long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                 
                 stream = message.Content.ReadAsStreamAsync().Result;
             }
@@ -298,19 +347,17 @@ namespace Emc.Documentum.Rest.Net
             return stream;
         }
 
+        /// <summary>
+        /// Does a raw get using a URI and returns the result as a Stream.
+        /// </summary>
+        /// <param name="uri">Request URI</param>
+        /// <returns>Response body as stream</returns>
         public Stream GetRaw(string uri)
         {
             return GetRaw(uri, true);
         }
 
-        /// <summary>
-        /// Posts to the Repository
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="uri"></param>
-        /// <param name="requestBody"></param>
-        /// <returns></returns>
-        public HttpRequestMessage getPostRequest<T>(string uri, T requestBody) 
+        private HttpRequestMessage CreatePostRequest<T>(string uri, T requestBody) 
         {
             HttpRequestMessage request = null;
             try
@@ -338,7 +385,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// Sets the post information
+        /// Performs a POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="R"></typeparam>
@@ -357,14 +404,14 @@ namespace Emc.Documentum.Rest.Net
                     JsonSerializer.WriteObject(ms, requestBody);
                     byte[] requestInJson = ms.ToArray();
                     HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-                    HttpRequestMessage request = getPostRequest(uri, requestBody);
+                    HttpRequestMessage request = CreatePostRequest(uri, requestBody);
                     Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
                     long tStart = DateTime.Now.Ticks;
                     HttpResponseMessage message = response.Result;
                     long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                     long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                     long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null? 0L: requestSize.Value, contentSize == null? 0L : contentSize.Value);
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null? 0L: requestSize.Value, contentSize == null? 0L : contentSize.Value);
                     message.EnsureSuccessStatusCode();
                     if (message.Content != null)
                     {
@@ -385,7 +432,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Performs a POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="uri"></param>
@@ -398,7 +445,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Performs a POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="uri"></param>
@@ -454,7 +501,7 @@ namespace Emc.Documentum.Rest.Net
                     long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                     long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                     long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                     message.EnsureSuccessStatusCode();
                     if (message.Content != null)
                     {
@@ -525,7 +572,7 @@ namespace Emc.Documentum.Rest.Net
                     long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                     long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                     long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                     message.EnsureSuccessStatusCode();
                     if (message.Content != null)
                     {
@@ -557,7 +604,7 @@ namespace Emc.Documentum.Rest.Net
         /// <param name="uri"></param>
         /// <param name="content"></param>
         /// <returns></returns>
-        public T postUrlEncoded<T>(string uri, FormUrlEncodedContent content)
+        public T PostUrlEncoded<T>(string uri, FormUrlEncodedContent content)
         {
             T obj = default(T);
             try
@@ -576,7 +623,7 @@ namespace Emc.Documentum.Rest.Net
                     long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                     long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                     long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                     message.EnsureSuccessStatusCode();
                     if (message.Content != null)
                     {
@@ -625,7 +672,7 @@ namespace Emc.Documentum.Rest.Net
                     long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
                     long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
                     long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
                     message.EnsureSuccessStatusCode();
                     if (message.Content != null)
                     {
@@ -647,305 +694,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="uri"></param>
-        /// <param name="requestBody"></param>
-        /// <returns></returns>
-        public HttpRequestMessage getPutRequest<T>(string uri, T requestBody)
-        {
-            HttpRequestMessage request = null;
-            using (MemoryStream stream = new MemoryStream())
-            {
-                request = new HttpRequestMessage(HttpMethod.Put, uri);
-                JsonSerializer.WriteObject(stream, requestBody);
-                request.Content = new ByteArrayContent(stream.ToArray());
-                request.Content.Headers.ContentType = JSON_VND_MEDIA_TYPE;
-                request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
-                SetBasicAuthHeader(request);
-            }
-            return request;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="R"></typeparam>
-        /// <param name="uri"></param>
-        /// <param name="requestBody"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        public R Put<T, R>(string uri, T requestBody, List<KeyValuePair<string, object>> query)
-        {
-            uri = UriUtil.BuildUri(uri, query);
-            R obj = default(R);
-            try
-            {
-                    HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-                    HttpRequestMessage request = getPutRequest(uri, requestBody);
-                    Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
-                    long tStart = DateTime.Now.Ticks;
-                    HttpResponseMessage message = response.Result;
-                    long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
-                    long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
-                    long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
-                    message.EnsureSuccessStatusCode();
-                    if (message.Content != null)
-                    {
-                        Task<Stream> result = message.Content.ReadAsStreamAsync();
-                        obj = JsonSerializer.ReadObject<R>(result.Result);
-                    }
-                    return obj;
-            }
-            catch (Exception e)
-            {
-                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Error URI: " + uri, e.StackTrace);
-                if(e.InnerException is TaskCanceledException)
-                {
-                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
-                }
-            }
-            return obj;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="uri"></param>
-        /// <param name="requestBody"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        public T Put<T>(string uri, T requestBody, List<KeyValuePair<string, object>> query)
-        {
-            return Put<T, T>(uri, requestBody, query);
-        }
-
-        /// <summary>
-        /// Put by type
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="uri"></param>
-        /// <param name="requestBody"></param>
-        /// <returns></returns>
-        public T Put<T>(string uri, T requestBody)
-        {
-            return Put<T>(uri, requestBody, null);
-        }
-
-        /// <summary>
-        /// HTTP Requst message return
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <returns></returns>
-        public HttpRequestMessage getDeleteRequest(string uri)
-        {
-            HttpRequestMessage request = null;
-            try
-            {
-                request = new HttpRequestMessage(HttpMethod.Delete, uri);
-                request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
-                SetBasicAuthHeader(request);
-            }
-            catch (Exception e)
-            {
-                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Unable to create DELETE Request: " + uri, e);
-                if(e.InnerException is TaskCanceledException)
-                {
-                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
-                }
-            }
-            return request;
-        }
-
-
-        private void WriteToLog(LogLevel logLevel, string thread, string message, Exception exception)
-        {
-            if (Logger != null)
-            {
-                Logger.WriteToLog(logLevel, thread, message, exception);
-            }
-        }
-
-        private void WriteToLog(LogLevel logLevel, string thread, string message, string verboseMessage)
-        {
-            if (Logger != null)
-            {
-                Logger.WriteToLog(logLevel, thread, message, verboseMessage);
-            }
-        }
-
-        /// <summary>
-        /// Delete post
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="query"></param>
-        public void Delete(string uri, List<KeyValuePair<string, object>> query)
-        {
-            uri = UriUtil.BuildUri(uri, query);
-            try
-            {
-                HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-                HttpRequestMessage request = getDeleteRequest(uri);
-                Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
-                long tStart = DateTime.Now.Ticks;
-                HttpResponseMessage message = response.Result;
-                long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
-                long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
-                long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                logPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
-                message.EnsureSuccessStatusCode();
-            }
-            catch (Exception e)
-            {
-                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Error URI: " + uri, e);
-                if(e.InnerException is TaskCanceledException)
-                {
-                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="uri"></param>
-        public void Delete(string uri)
-        {
-            Delete(uri, null);
-        }
-
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="disposing"></param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _httpClient.Dispose();
-                }
-            }
-            _disposed = true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="links"></param>
-        /// <param name="rel"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public Feed<T> GetFeed<T>(List<Link> links, string rel, FeedGetOptions options)
-        {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                rel);
-            Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
-            if (feed != null) feed.Client = this;
-            return feed;
-        }
-
-        public SearchFeed<T> GetSearchFeed<T>(List<Link> links, string rel, FeedGetOptions options)
-        {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                rel);
-            SearchFeed<T> feed = this.Get<SearchFeed<T>>(followingUri, options == null ? null : options.ToQueryList());
-            if(feed != null) feed.Client = this;
-            return feed;
-        }
-
-        public Feed<T> GetFeed<T>(String followingUri, FeedGetOptions options)
-        {
-            Feed<T> feed = this.Get<Feed<T>>(followingUri, options == null ? null : options.ToQueryList());
-            if (feed != null) feed.Client = this;
-            return feed;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="links"></param>
-        /// <param name="rel"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public T GetSingleton<T>(List<Link> links, string rel, SingleGetOptions options)
-        {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                rel);
-            T result = this.Get<T>(followingUri, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
-            return result;
-        }
-
-        public T GetObjectById<T>(String objectId, SingleGetOptions options) where T : PersistentObject
-        {
-            T result = this.Get<T>(RepositoryBaseUri + "/objects/" + objectId, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
-            return result;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="links"></param>
-        /// <param name="rel"></param>
-        /// <param name="input"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public T Put<T>(List<Link> links, string rel, T input, GenericOptions options)
-        {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                rel);
-            T result = this.Put<T>(followingUri, input, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
-            return result;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="R"></typeparam>
-        /// <param name="links"></param>
-        /// <param name="rel"></param>
-        /// <param name="input"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public R Put<T, R>(List<Link> links, string rel, T input, GenericOptions options)
-        {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                rel);
-            R result = this.Put<T, R>(followingUri, input, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
-            return result;
-        }
-
-        /// <summary>
-        /// 
+        /// Performs POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="R"></typeparam>
@@ -960,22 +709,12 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             R result = this.Post<T, R>(followingUri, input, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
-            return result;
-        }
-
-        /*
-        public T Post<T>(String uri, T input, GenericOptions options)
-        {
-            T result = this.Post<T>(uri, input, options == null ? null : options.ToQueryList());
             if (result != null) (result as Executable).SetClient(this);
             return result;
         }
-        */
-
 
         /// <summary>
-        /// 
+        /// Performs POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="links"></param>
@@ -989,12 +728,12 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.Post<T>(followingUri, input, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
+            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
         /// <summary>
-        /// 
+        /// Perfomrs POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="links"></param>
@@ -1009,7 +748,7 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.PostMultiparts<T>(followingUri, input, otherParts, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
+            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -1032,7 +771,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Perfomrs POST method
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="links"></param>
@@ -1047,12 +786,194 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.PostRaw<T>(followingUri, input, mime, options == null ? null : options.ToQueryList());
-            if(result != null) (result as Executable).SetClient(this);
+            if (result != null) (result as Executable).SetClient(this);
+            return result;
+        }
+
+        private HttpRequestMessage CreatePutRequest<T>(string uri, T requestBody)
+        {
+            HttpRequestMessage request = null;
+            using (MemoryStream stream = new MemoryStream())
+            {
+                request = new HttpRequestMessage(HttpMethod.Put, uri);
+                JsonSerializer.WriteObject(stream, requestBody);
+                request.Content = new ByteArrayContent(stream.ToArray());
+                request.Content.Headers.ContentType = JSON_VND_MEDIA_TYPE;
+                request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
+                SetBasicAuthHeader(request);
+            }
+            return request;
+        }
+
+        /// <summary>
+        /// Performs PUT method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="R"></typeparam>
+        /// <param name="uri"></param>
+        /// <param name="requestBody"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public R Put<T, R>(string uri, T requestBody, List<KeyValuePair<string, object>> query)
+        {
+            uri = UriUtil.BuildUri(uri, query);
+            R obj = default(R);
+            try
+            {
+                    HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
+                    HttpRequestMessage request = CreatePutRequest(uri, requestBody);
+                    Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
+                    long tStart = DateTime.Now.Ticks;
+                    HttpResponseMessage message = response.Result;
+                    long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
+                    long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
+                    long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
+                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                    message.EnsureSuccessStatusCode();
+                    if (message.Content != null)
+                    {
+                        Task<Stream> result = message.Content.ReadAsStreamAsync();
+                        obj = JsonSerializer.ReadObject<R>(result.Result);
+                    }
+                    return obj;
+            }
+            catch (Exception e)
+            {
+                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Error URI: " + uri, e.StackTrace);
+                if(e.InnerException is TaskCanceledException)
+                {
+                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
+                }
+            }
+            return obj;
+        }
+
+        /// <summary>
+        /// Performs PUT method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="uri"></param>
+        /// <param name="requestBody"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public T Put<T>(string uri, T requestBody, List<KeyValuePair<string, object>> query)
+        {
+            return Put<T, T>(uri, requestBody, query);
+        }
+
+        /// <summary>
+        /// Performs PUT method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="uri"></param>
+        /// <param name="requestBody"></param>
+        /// <returns></returns>
+        public T Put<T>(string uri, T requestBody)
+        {
+            return Put<T>(uri, requestBody, null);
+        }
+
+        /// <summary>
+        /// Performs PUT method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="links"></param>
+        /// <param name="rel"></param>
+        /// <param name="input"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T Put<T>(List<Link> links, string rel, T input, GenericOptions options)
+        {
+            string followingUri = LinkRelations.FindLinkAsString(
+                links,
+                rel);
+            T result = this.Put<T>(followingUri, input, options == null ? null : options.ToQueryList());
+            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
         /// <summary>
-        /// 
+        /// Performs PUT method
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="R"></typeparam>
+        /// <param name="links"></param>
+        /// <param name="rel"></param>
+        /// <param name="input"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public R Put<T, R>(List<Link> links, string rel, T input, GenericOptions options)
+        {
+            string followingUri = LinkRelations.FindLinkAsString(
+                links,
+                rel);
+            R result = this.Put<T, R>(followingUri, input, options == null ? null : options.ToQueryList());
+            if (result != null) (result as Executable).SetClient(this);
+            return result;
+        }
+
+        private HttpRequestMessage CreateDeleteRequest(string uri)
+        {
+            HttpRequestMessage request = null;
+            try
+            {
+                request = new HttpRequestMessage(HttpMethod.Delete, uri);
+                request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
+                SetBasicAuthHeader(request);
+            }
+            catch (Exception e)
+            {
+                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Unable to create DELETE Request: " + uri, e);
+                if(e.InnerException is TaskCanceledException)
+                {
+                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
+                }
+            }
+            return request;
+        }
+
+        /// <summary>
+        /// Peforms DELETE method
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="query"></param>
+        public void Delete(string uri, List<KeyValuePair<string, object>> query)
+        {
+            uri = UriUtil.BuildUri(uri, query);
+            try
+            {
+                HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
+                HttpRequestMessage request = CreateDeleteRequest(uri);
+                Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
+                long tStart = DateTime.Now.Ticks;
+                HttpResponseMessage message = response.Result;
+                long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
+                long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
+                long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
+                LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
+                message.EnsureSuccessStatusCode();
+            }
+            catch (Exception e)
+            {
+                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Error URI: " + uri, e);
+                if(e.InnerException is TaskCanceledException)
+                {
+                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Performs DELETE method
+        /// </summary>
+        /// <param name="uri"></param>
+        public void Delete(string uri)
+        {
+            Delete(uri, null);
+        }
+
+        /// <summary>
+        /// Perfomrs DELETE method
         /// </summary>
         /// <param name="links"></param>
         /// <param name="rel"></param>
@@ -1066,24 +987,73 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Dispose HTTP client
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="links"></param>
-        /// <returns></returns>
-        public T Self<T>(List<Link> links)
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
         {
-            string followingUri = LinkRelations.FindLinkAsString(
-                links,
-                LinkRelations.SELF.Rel);
-            T result = this.Get<T>(followingUri, null);
-            if(result != null) (result as Executable).SetClient(this);
-            return result;
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _httpClient.Dispose();
+                }
+            }
+            _disposed = true;
         }
 
-        public RestService getHome(string RestHomeUri)
+        /// <summary>
+        /// Dispose HTTP client and garbage colletion
+        /// </summary>
+        public void Dispose()
         {
-            return Get<RestService>(RestHomeUri, null);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        private void WriteToLog(LogLevel logLevel, string thread, string message, Exception exception)
+        {
+            if (Logger != null)
+            {
+                Logger.WriteToLog(logLevel, thread, message, exception);
+            }
+        }
+
+        private void WriteToLog(LogLevel logLevel, string thread, string message, string verboseMessage)
+        {
+            if (Logger != null)
+            {
+                Logger.WriteToLog(logLevel, thread, message, verboseMessage);
+            }
+        }
+
+
+        private void LogPerformance(long time, string type, string uri, long requestSize, long responseSize)
+        {
+            long overThreshold = 80L;
+            long transactionSize = requestSize + responseSize;
+
+            switch (type)
+            {
+                case "GET":
+                    overThreshold = 100L;
+                    break;
+                case "POST":
+                    overThreshold = 1000L;
+                    break;
+                case "PUT":
+                    overThreshold = 1000L;
+                    break;
+            }
+
+            string timeState = "NORMAL";
+            if (time > overThreshold)
+            {
+                timeState = "SLOW";
+            }
+            WriteToLog(LogLevel.DEBUG, timeState, time + "ms|TotalSize:" + transactionSize
+                    + "|RequestSize:" + requestSize + "|ResponseSize:" + responseSize + "|" + uri, type);
+        }
+
     }
 }

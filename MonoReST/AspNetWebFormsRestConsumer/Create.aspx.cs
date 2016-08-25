@@ -25,7 +25,7 @@ namespace AspNetWebFormsRestConsumer
         protected void btnCreate_Click(object sender, EventArgs e)
         {
             D2Document doc = null;
-            Repository repository = Global.GetRepository();
+            D2Repository repository = Global.GetRepository();
             if (String.IsNullOrEmpty(txtName.Text))
             {
                 lblError.Visible = true;
@@ -52,11 +52,11 @@ namespace AspNetWebFormsRestConsumer
                         D2Configuration d2Config = new D2Configuration();
                         d2Config.StartVersion = Double.Parse(txtStartVersion.Text);
                         doc = repository.ImportNewD2Document(tmpFile, txtName.Text, txtPath.Text, d2Config);
-                        doc.setAttributeValue("object_name", txtName.Text);
-                        doc.setAttributeValue("title", txtTitle.Text);
-                        doc.setAttributeValue("subject", txtSubject.Text);
+                        doc.SetPropertyValue("object_name", txtName.Text);
+                        doc.SetPropertyValue("title", txtTitle.Text);
+                        doc.SetPropertyValue("subject", txtSubject.Text);
                         doc.Save();
-                        doc = doc.fetch<D2Document>();
+                        doc = doc.Fetch<D2Document>();
                         lblError.ForeColor = System.Drawing.Color.Green;
                         lblError.Text = "Saved: \n" + doc.ToString();
                         tmpFile.Delete();

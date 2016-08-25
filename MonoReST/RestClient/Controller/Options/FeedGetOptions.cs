@@ -6,24 +6,116 @@ using System.Threading.Tasks;
 
 namespace Emc.Documentum.Rest.Net
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     /// <summary>
     /// Feed related query parameters
     /// </summary>
     public class FeedGetOptions : SingleGetOptions
     {
+        /// <summary>
+        /// Query parameter 'inline'
+        /// </summary>
+        public static readonly string PARAM_INLINE = "inline";
+        /// <summary>
+        /// Query parameter 'recursive'
+        /// </summary>
         public static readonly String PARAM_RECURSIVE = "recursive";
+        /// <summary>
+        /// Query parameter 'sort'
+        /// </summary>
         public static readonly String PARAM_SORT = "sort";
+        /// <summary>
+        /// Query parameter 'filter'
+        /// </summary>
         public static readonly String PARAM_FILTER = "filter";
+        /// <summary>
+        /// Query parameter 'page'
+        /// </summary>
         public static readonly String PARAM_PAGE = "page";
+        /// <summary>
+        /// Query parameter 'items-per-page'
+        /// </summary>
         public static readonly String PARAM_ITEMS_PER_PAGE = "items-per-page";
+        /// <summary>
+        /// Query parameter 'include-total'
+        /// </summary>
         public static readonly String PARAM_INCLUDE_TOTAL = "include-total";
+        /// <summary>
+        /// Query parameter 'raw'
+        /// </summary>
         public static readonly String PARAM_RAW = "raw";
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public FeedGetOptions() : base() {
+            Inline = true;
             PageNumber = 1;
             IncludeTotal = false;
         }
 
+        /// <summary>
+        /// Specifies whether to inline objects in a feed.
+        /// </summary>
+        public Boolean Inline
+        {
+            get
+            {
+                return (Boolean)pa[PARAM_INLINE];
+            }
+            set
+            {
+                if (!pa.ContainsKey(PARAM_INLINE))
+                {
+                    pa.Add(PARAM_INLINE, value);
+                }
+                else { pa[PARAM_INLINE] = value; }
+            }
+        }
+
+        /// <summary>
+        /// Specifies the object properties to retrieve. This parameter 
+        /// works only when inline is set to true so if set to true
+        /// this method will also set inline to true;
+        /// </summary>
+        public override String View
+        {
+            get
+            {
+                return base.View;
+            }
+            set
+            {
+                if (!String.IsNullOrEmpty(View))
+                {
+                    Inline = true;
+                }
+                base.View = value;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not to return link relations in the object 
+        /// representation This parameter works only when inline is set to true.
+        /// true - return link relations
+        /// false - do not return link relations
+        /// Default: true
+        /// </summary>
+        public override Boolean Links
+        {
+            get
+            {
+                return base.Links;
+            }
+            set
+            {
+                if (value) Inline = true;
+                base.Links = value;
+            }
+        }
+
+        /// <summary>
+        /// Specifies the sort spec, e.g. "object_name asc"
+        /// </summary>
         public String Sort
         {
             get { return pa[PARAM_SORT].ToString();}
@@ -34,7 +126,9 @@ namespace Emc.Documentum.Rest.Net
             }
         }
 
-
+        /// <summary>
+        /// Specifies the filter, e.g. "starts-with(object_name, 'Readme')"
+        /// </summary>
         public String Filter
         {
             get { return pa[PARAM_FILTER].ToString(); }
@@ -68,7 +162,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// Specify the number of items to be rendered on a page
+        /// Specifies the number of items to be rendered on a page
         /// default: 100
         /// </summary>
         public Int32 ItemsPerPage
@@ -85,7 +179,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// Determines whether or not to return the total number of objects. 
+        /// Specifies whether or not to return the total number of objects. 
         /// For paged feeds, objects in all pages are counted.
         /// true - return the total number of objects
         /// false - do not return the total number of objects
@@ -105,6 +199,7 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
+        ///  Used on DQL query resource only.
         ///  Indicates whether to return the DQL results as raw property bag or with links generated.
         ///  When this parameter is set to false, the REST server generates link relations and/or
         ///  including thumbnail links if possible.
@@ -124,7 +219,7 @@ namespace Emc.Documentum.Rest.Net
 
 
         /// <summary>
-        /// Determines whether or not to return all indirect children recursively when a 
+        /// Specifies whether or not to return all indirect children recursively when a 
         /// request tries to get the children of an object.
         /// true -  return all indirect children recursively when a request tries to get 
         ///         the children of an object.
@@ -144,8 +239,5 @@ namespace Emc.Documentum.Rest.Net
                 else { pa[PARAM_RECURSIVE] = value; }
             }
         }
-
-        
-
     }
 }

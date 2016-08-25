@@ -26,8 +26,8 @@ namespace Emc.Documentum.Rest.Http.Utility
             Folder obj = new Folder();
             obj.Name = "folder";
             obj.Type = type;
-            obj.setAttributeValue("object_name", namePrefix + System.Guid.NewGuid().ToString().Substring(0, 8));
-            obj.setAttributeValue("r_object_type", type);
+            obj.SetPropertyValue("object_name", namePrefix + System.Guid.NewGuid().ToString().Substring(0, 8));
+            obj.SetPropertyValue("r_object_type", type);
             return obj;
         }
 
@@ -37,13 +37,13 @@ namespace Emc.Documentum.Rest.Http.Utility
         /// <param name="namePrefix"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static RestDocument NewRandomDocument(string namePrefix, string type)
+        public static Document NewRandomDocument(string namePrefix, string type)
         {
-            RestDocument obj = new RestDocument();
+            Document obj = new Document();
             obj.Name = "document";
             obj.Type = type;
-            obj.setAttributeValue("object_name", NewRandomDocumentName(namePrefix));
-            obj.setAttributeValue("r_object_type", type);
+            obj.SetPropertyValue("object_name", NewRandomDocumentName(namePrefix));
+            obj.SetPropertyValue("r_object_type", type);
             return obj;
         }
 
@@ -277,22 +277,23 @@ namespace Emc.Documentum.Rest.Http.Utility
         }
 
 
-        public static EmailPackage getFeedAsEmailPackage(Feed<RestDocument> feed)
+        public static EmailPackage getFeedAsEmailPackage(Feed<Document> feed)
         {
             RestController client = feed.Client;
             if (client == null) throw new Exception("CLIENTNULLEXCEPTION: the feed passed does not have its client set, no operations are possible without this.");
             long tStart = DateTime.Now.Ticks;
-            SingleGetOptions options = new SingleGetOptions { Inline = true, Links = true };
+            SingleGetOptions options = new SingleGetOptions { Links = true };
             EmailPackage emailPkg = null; ;
-            List<Entry<RestDocument>> entries = feed.Entries;
-            Entry<RestDocument> emailEntry = (from k in entries where (k.Title != null && k.Title.Equals("EMAIL")) select k).FirstOrDefault();
+            List<Entry<Document>> entries = feed.Entries;
+            Entry<Document> emailEntry = (from k in entries where (k.Title != null && k.Title.Equals("EMAIL")) select k).FirstOrDefault();
             var attachmentEntry = (from a in entries where (a.Title != null && a.Title.Equals("ATTACHMENT")) select a.Content);
 
             if (emailEntry == null) return null;
 
-            string objectId = emailEntry.Content.getAttributeValue("r_object_id").ToString();
-            RestDocument document = client.GetObjectById<RestDocument>(objectId, options);
-                //.getDocumentByQualification(
+            string objectId = emailEntry.Content.GetPropertyValue("r_object_id").ToString();
+            Document document = null;
+            //todo
+                //client.getDocumentByQualification(
                 //String.Format("dm_document where r_object_id = '{0}'", objectId), 
                 //new FeedGetOptions { Inline = true, Links = true });
 
@@ -314,10 +315,12 @@ namespace Emc.Documentum.Rest.Http.Utility
             
             //string extension = (from k in map where k.Value.Equals(format) select k.Key).FirstOrDefault();
 
-            foreach (RestDocument attachment in attachmentEntry)
+            foreach (Document attachment in attachmentEntry)
             {
-                string attachmentId = attachment.getAttributeValue("r_object_id").ToString();
-                RestDocument attDocument = client.GetObjectById<RestDocument>(attachmentId, options);
+                string attachmentId = attachment.GetPropertyValue("r_object_id").ToString();
+                Document attDocument = null;
+                // todo
+                // client.GetObjectById<Document>(attachmentId, options);
                 emailPkg.Attachments.Add(attDocument);
             }
             client.Logger.WriteToLog(Rest.Utility.LogLevel.DEBUG, "EmailFeedToPackage", 

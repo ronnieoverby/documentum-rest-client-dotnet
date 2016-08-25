@@ -8,16 +8,37 @@ namespace Emc.Documentum.Rest.Net
 {
 
     /// <summary>
-    /// Options specific to 
+    /// Options specific to search resource
     /// </summary>
-    class FullTextQueryOptions : FeedGetOptions
+    public class SearchOptions : FeedGetOptions
     {
+        /// <summary>
+        /// Query parameter 'q'
+        /// </summary>
         public static readonly String PARAM_SEARCH_QUERY = "q";
+        /// <summary>
+        /// Query parameter 'locations'
+        /// </summary>
         public static readonly String PARAM_LOCATIONS = "locations";
+        /// <summary>
+        /// Query parameter 'collections' 
+        /// </summary>
         public static readonly String PARAM_COLLECTIONS = "collections";
+        /// <summary>
+        /// Query parameter 'facet'
+        /// </summary>
         public static readonly String PARAM_FACET = "facet";
+        /// <summary>
+        /// Query parameter 'facet-value-constraints'
+        /// </summary>
         public static readonly String PARAM_FACET_VALUE_CONTRAINTS = "facet-value-constraints";
+        /// <summary>
+        /// Query parameter 'timezone'
+        /// </summary>
         public static readonly String PARAM_TIMEZONE = "timezone";
+        /// <summary>
+        /// Query parameter 'object-type'
+        /// </summary>
         public static readonly String PARAM_OBJECT_TYPE = "object-type";
 
         /// <summary>

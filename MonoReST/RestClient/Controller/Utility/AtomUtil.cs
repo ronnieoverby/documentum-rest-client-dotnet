@@ -8,21 +8,42 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.Http.Utility
 {
     /// <summary>
-    /// 
+    /// Atom utility
     /// </summary>
     public class AtomUtil
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static string ID = "id";
-
-        public static string TITLE = "title";
-        public static string SUMMARY = "summary";
-        public static string AUTHOR = "author";
-        public static string UPDATED = "updated";
-        public static string PUBLISHED = "published";
-        public static string ENTRIES = "entries";
-        public static string LINKS = "links";
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        /// <summary>
+        /// atom id
+        /// </summary>
+        public static readonly string ID = "id";
+        /// <summary>
+        /// atom title
+        /// </summary>
+        public static readonly string TITLE = "title";
+        /// <summary>
+        /// atom summary
+        /// </summary>
+        public static readonly string SUMMARY = "summary";
+        /// <summary>
+        /// atom author
+        /// </summary>
+        public static readonly string AUTHOR = "author";
+        /// <summary>
+        /// atom updated
+        /// </summary>
+        public static readonly string UPDATED = "updated";
+        /// <summary>
+        /// atom published
+        /// </summary>
+        public static readonly string PUBLISHED = "published";
+        /// <summary>
+        /// atom entries
+        /// </summary>
+        public static readonly string ENTRIES = "entries";
+        /// <summary>
+        /// atom links
+        /// </summary>
+        public static readonly string LINKS = "links";
 
         /// <summary>
         /// 

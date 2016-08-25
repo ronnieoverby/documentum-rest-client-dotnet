@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "profile-configuration", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public class ProfileConfigurations : Linkable, Executable
+    public class ProfileConfigurations : ExecLinkable
     {
         [DataMember(Name = "id")]
         public String id { get; set; }
@@ -69,18 +69,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
             ProfileConfiguration pConfig = Client.Get<ProfileConfiguration>(uri, null);
             pConfig.SetClient(Client);
             return pConfig;
-        }
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
         }
     }
 

@@ -11,7 +11,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "profile-configuration", Namespace = "http://www.w3.org/2005/Atom")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class ProfileConfiguration : Linkable, Executable
+    public class ProfileConfiguration : ExecLinkable
     {
         [DataMember(Name = "object_name")]
         public String Name { get; set; }
@@ -51,26 +51,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
         [DataMember(Name = "attribute_names")]
         public List<String> AttributeNames;
-
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-        public override string ToString()
-        {
-            JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
-            return serializer.Serialize(this);
-        }
-
     }
 }
 

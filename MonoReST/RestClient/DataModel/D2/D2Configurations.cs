@@ -13,7 +13,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "d2-configurations", Namespace = "http://identifiers.emc.com/vocab/documentum")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class D2Configurations : Linkable , Executable // Available on the Repository object.
+    public class D2Configurations : ExecLinkable // Available on the Repository object.
     {
         public string Title { get; set; }
         public SearchConfigurations getSearchConfigurations()
@@ -31,20 +31,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
             pConfigs.SetClient(Client);
             return pConfigs;
         }
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-
     }
 
 

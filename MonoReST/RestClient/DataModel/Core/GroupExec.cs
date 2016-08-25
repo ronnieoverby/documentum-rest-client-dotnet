@@ -6,12 +6,11 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    [DataContract(Name = "group", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public partial class Group : PersistentObject
+    public partial class Group
     {
         /// <summary>
         /// Get groups feed of which this group is a member

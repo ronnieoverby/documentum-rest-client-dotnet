@@ -42,10 +42,10 @@ namespace Emc.Documentum.Rest.DataModel
         /// </summary>
         public DuplicateType DuplicateType { get; set; }
 
-        public EmailPackage(RestDocument doc, bool isDuplicate)
+        public EmailPackage(Document doc, bool isDuplicate)
         {
             Email = doc;
-            Attachments = new List<RestDocument>();
+            Attachments = new List<Document>();
             duplicate = isDuplicate;
         }
 
@@ -55,7 +55,7 @@ namespace Emc.Documentum.Rest.DataModel
             return serializer.Serialize(this);
         }
 
-        public RestDocument Email { get; set; }
-        public List<RestDocument> Attachments { get; set; }
+        public Document Email { get; set; }
+        public List<Document> Attachments { get; set; }
     }
 }

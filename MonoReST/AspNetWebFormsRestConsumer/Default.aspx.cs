@@ -28,11 +28,10 @@ namespace AspNetWebFormsRestConsumer
             {
                 lblLoginBanner.Text = "";
                 SingleGetOptions options = new SingleGetOptions();
-                options.Inline = true;
                 User currentUser = repository.GetCurrentUser(options);
                 lblUserInfo.Visible = true;
                 lblUserInfo.ForeColor = System.Drawing.Color.Green;
-                lblUserInfo.Text = "User " + currentUser.getAttributeValue("user_name").ToString() + " successfully logged in!";
+                lblUserInfo.Text = "User " + currentUser.GetPropertyValue("user_name").ToString() + " successfully logged in!";
                 lblLoginBanner.CssClass = "message-success";
             } else
             {

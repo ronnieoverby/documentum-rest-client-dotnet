@@ -20,7 +20,7 @@ namespace Emc.Documentum.Rest.Net
         private DataContractJsonSerializerSettings JSON_SER_SETTINGS;
 
         /// <summary>
-        /// 
+        /// DefaultDataContractJsonSerializer with default setting
         /// </summary>
         public DefaultDataContractJsonSerializer()
         {
@@ -32,11 +32,11 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Read resource data object from JSON message stream
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="input"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="input">JSON input stream</param>
+        /// <returns>Resource data model object</returns>
         public override T ReadObject<T>(Stream input)
         {
             DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T), JSON_SER_SETTINGS);
@@ -45,11 +45,11 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Write resource data object to JSON message stream
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="output"></param>
-        /// <param name="obj"></param>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="output">JSON output stream</param>
+        /// <param name="obj">Resource data model object</param>
         public override void WriteObject<T>(Stream output, T obj)
         {
             DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T), JSON_SER_SETTINGS);
@@ -57,11 +57,11 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Serialize resource data object to JSON string
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="obj"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="obj">Resource data model object</param>
+        /// <returns>String JSON message</returns>
         public String Serialize<T>(T obj)
         {
             DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T), JSON_SER_SETTINGS);

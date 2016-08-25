@@ -9,322 +9,35 @@ using System.Runtime.Serialization;
 using System.Net.Http;
 using System.IO;
 using System.IO.Compression;
-using Emc.Documentum.Rest.DataModel.D2;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-    public enum HistoryType
+    public partial class Repository 
     {
-        FULLVERSIONTREE,
-        THISDOCUMENTONLY
-    }
-
-    [DataContract(Name = "repository", Namespace = "http://identifiers.emc.com/vocab/documentum")] 
-    public class Repository : Linkable, Executable
-    {
-        [DataMember(Name = "id")]
-        public string Id { get; set; }
-
-        [DataMember(Name = "name")]
-        public string Name { get; set; }
-
-        [DataMember(Name = "description")]
-        public string Description { get; set; }
-
-        [DataMember(Name = "servers")]
-        public List<Server> Servers { get; set; }
-
-        public override string ToString()
-        {
-            JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
-            return serializer.Serialize(this);
-        }
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-        /// <summary>
-        /// Get current login user resource
-        /// </summary>
-        /// <param name="options"></param>
-        /// <returns>Feed</returns>
-        public User GetCurrentUser(SingleGetOptions options)
-        {
-            return Client.GetSingleton<User>(
-                this.Links,
-                LinkRelations.CURRENT_USER.Rel,
-                options);
-        }
-
-        public D2Configurations GetD2Configurations(SingleGetOptions options)
-        {
-            return Client.GetSingleton<D2Configurations>(
-                this.Links,
-                LinkRelations.D2_CONFIGURATION.Rel,
-                options);
-        }
-
-        public Feed<D2Task> GetD2TaskList()
-        {
-            FeedGetOptions options = new FeedGetOptions();
-            options.Inline = true;
-            return Client.GetFeed<D2Task>(
-                this.Links, 
-                LinkRelations.TASK_LIST.Rel, 
-                options);
-        }
-
-        public bool isD2Rest()
-        {
-            string d2ConfigLink = LinkRelations.FindLinkAsString(
-                Links,
-                LinkRelations.D2_CONFIGURATION.Rel);
-            return d2ConfigLink != null;
-        }
-
-        /// <summary>
-        /// Get cabinets feed in this repository
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="options"></param>
-        /// <returns>Feed</returns>
-        public Feed<T> GetCabinets<T>(FeedGetOptions options)
-        {
-            return Client.GetFeed<T>(
-                this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.CABINETS.Rel,
-                options);
-        }
-
-        /// <summary>
-        /// Get users feed in this repository
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="options"></param>
-        /// <returns>Feed</returns>
-        public Feed<T> GetUsers<T>(FeedGetOptions options)
-        {
-            return Client.GetFeed<T>(
-                this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.USERS.Rel,
-                options);
-        }
-
-        /// <summary>
-        /// Get groups in this repository
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="options"></param>
-        /// <returns>Feed</returns>
-        public Feed<T> GetGroups<T>(FeedGetOptions options)
-        {
-            return Client.GetFeed<T>(
-                this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.GROUPS.Rel,
-                options);
-        }
-
-        /// <summary>
-        ///  Get checked out PersistentObjects in this repository
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="options"></param>
-        /// <returns>Feed</returns>
-        public Feed<T> GetCheckedOutObjects<T>(FeedGetOptions options)
-        {
-            return Client.GetFeed<T>(
-                this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.CHECKED_OUT_OBJECTS.Rel,
-                options);
-        }
-
-       /// <summary>
-        /// Execute a DQL query in this repository
-       /// </summary>
-       /// <typeparam name="T"></typeparam>
-       /// <param name="dql"></param>
-       /// <param name="options"></param>
-       /// <returns>Feed</returns>
-        public Feed<T> ExecuteDQL<T>(string dql, FeedGetOptions options)
-        {
-            decimal count = 0;
-            double pageCount = 0;
-
-            if (options == null) options = new FeedGetOptions();
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            
-            /******************** BEGIN GET TOTAL IF SPECIFIED *****************************/
-            if (options!= null && options.IncludeTotal)
-            {
-                String countDql = "select count(*) as total " + dql.Substring(dql.IndexOf("from")); 
-                List<KeyValuePair<string, object>> cl = options.ToQueryList();
-                cl.Add(new KeyValuePair<string, object>("dql", countDql));
-                Feed<PersistentObject> countFeed = Client.Get<Feed<PersistentObject>>(dqlUriWithoutTemplateParams, cl);
-                List<Entry<PersistentObject>> res = (List<Entry<PersistentObject>>)countFeed.Entries;
-                
-                foreach (Entry<PersistentObject> obj in res) // There will only be one result
-                {
-                    count = decimal.Parse(obj.Content.getAttributeValue("total").ToString());
-                } 
-            }
-            /********************* END GET TOTAL IF SPECIFIED ******************************/
-
-            // Now execute the real query
-            List<KeyValuePair<string, object>> pa = options.ToQueryList(); 
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<T> feed = this.Client.Get<Feed<T>>(dqlUriWithoutTemplateParams, pa);
-            if (feed != null)
-            {
-                feed.Client = Client;
-            }
-
-            if (count > 0)
-            {
-                feed.Total = (int)count;
-                int itemsPerPage = (options.ItemsPerPage > 0) ? options.ItemsPerPage : feed.Total;
-                pageCount = Math.Ceiling((double)count / itemsPerPage);
-                feed.PageCount = pageCount;
-            }
-            return feed;
-        }
-
-
-       /// <summary>
-        ///  Executes a Full Text Query against this repository
-       /// </summary>
-       /// <typeparam name="T"></typeparam>
-       /// <param name="search"></param>
-       /// <returns>Feed</returns>
-        public SearchFeed<T> ExecuteSearch<T>(Search search)
-        {
-            decimal count = 0;
-            double pageCount = 0;
-
-            if (search == null) search = new Search();
-            string searchUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.SEARCH.Rel);
-            searchUri = searchUri.Substring(0, searchUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = search.ToQueryList();
-            SearchFeed<T> feed = this.Client.Get<SearchFeed<T>>(searchUri, pa);
-            if (feed != null)
-            {
-                feed.Client = Client;
-            }
-            count = feed == null? 0 : feed.Total;
-
-            if (count > 0)
-            {
-                int itemsPerPage = (search.ItemsPerPage > 0) ? search.ItemsPerPage : feed.Total;
-                pageCount = Math.Ceiling((double)count / itemsPerPage);
-                feed.PageCount = pageCount;
-            }
-            long tStart = DateTime.Now.Ticks;
-            // If raw search is not specified, get the full object for each item returned on the page
-            if (!search.Raw && feed != null)
-            {
-                foreach(SearchEntry<T> entry in feed.Entries)
-                {
-                    entry.Content = getObjectByQualification<T>(String.Format("dm_sysobject where r_object_id='{0}'", entry.Id.ToString()), null);
-                }
-            }
-            
-            return feed;
-
-        }
-
-        /// <summary>
-        /// This gets a folder object from the feed then fetches the full folder object. 
-        /// </summary>
-        /// <param name="dql"></param>
-        /// <param name="options"></param>
-        /// <returns>Folder</returns>
-        public Folder getFolderByQualification(string dql, FeedGetOptions options)
-        {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-             Feed<Folder> feed = this.Client.Get<Feed<Folder>>(dqlUriWithoutTemplateParams, pa);
-
-             List<Entry<Folder>> folders = feed == null? new List<Entry<Folder>>() : feed.Entries;
-             if (folders.Count == 0)
-             {
-                 return null;
-             }
-             else
-             {
-                string folderId = folders[0].Content.getAttributeValue("r_object_id").ToString();
-                Folder folder = getObjectById<Folder>(folderId);
-                 //Folder folder =  _client.Get<Folder>(folders[0].Content.Links[0].Href);
-                 folder.SetClient(this.Client);
-                 return folder;
-             }
-             
-        }
-
         /// <summary>
         /// List all the versions of a document
         /// </summary>
         /// <param name="doc"></param>
         /// <returns>List</returns>
-        public List<RestDocument> getAllDocumentVersions(RestDocument doc)
+        public List<Document> getAllDocumentVersions(Document doc)
         {
 
-            List<RestDocument> docVersions = new List<RestDocument>();
+            List<Document> docVersions = new List<Document>();
 
-            Feed<RestDocument> allVersions = ExecuteDQL<RestDocument>(
+            Feed<Document> allVersions = ExecuteDQL<Document>(
                 String.Format("select * from {0}(all) where i_chronicle_id='{1}'",
-                doc.getAttributeValue("r_object_type").ToString(),
-                doc.getAttributeValue("i_chronicle_id").ToString()),
+                doc.GetPropertyValue("r_object_type").ToString(),
+                doc.GetPropertyValue("i_chronicle_id").ToString()),
                 new FeedGetOptions { Inline = true, Links = true });
-            List<Entry<RestDocument>> docEntries = allVersions.Entries;
-            foreach (Entry<RestDocument> entry in docEntries)
+            List<Entry<Document>> docEntries = allVersions.Entries;
+            foreach (Entry<Document> entry in docEntries)
             {
-                RestDocument vDoc = entry.Content;
-                RestDocument fullDoc = _client.Get<RestDocument>(vDoc.Links[0].Href, null);
+                Document vDoc = entry.Content;
+                Document fullDoc = _client.Get<Document>(vDoc.Links[0].Href, null);
                 fullDoc.SetClient(this.Client);
                 docVersions.Add(fullDoc);
             }
             return docVersions;
-        }
-
-        /// <summary>
-        /// Get a document by a Dql qualification 
-        /// </summary>
-        /// <param name="dql"></param>
-        /// <param name="options"></param>
-        /// <returns>RestDocument</returns>
-        public RestDocument getDocumentByQualification(string dql, FeedGetOptions options)
-        {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null ? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<RestDocument> feed = this.Client.Get<Feed<RestDocument>>(dqlUriWithoutTemplateParams, pa);
-
-            List<Entry<RestDocument>> docs = (List<Entry<RestDocument>>)feed.Entries;
-            if (docs.Count == 0)
-            {
-                return null;
-            }
-            else
-            {
-                RestDocument doc = _client.Get<RestDocument>(docs[0].Content.Links[0].Href, null);
-                if(doc != null) doc.SetClient(this.Client);
-                return doc;
-            }
-
         }
 
         /// <summary>
@@ -345,7 +58,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="obj"></param>
         /// <param name="itemsPerPage"></param>
         /// <returns></returns>
-        public Feed<AuditEntry> getDocumentHistory(HistoryType type, PersistentObject obj, int itemsPerPage) 
+        public Feed<AuditEntry> getDocumentHistory(HistoryType type, PersistentObject obj, int itemsPerPage)
         {
             String auditQueryAttribute = "";
             String id = "";
@@ -353,11 +66,11 @@ namespace Emc.Documentum.Rest.DataModel
             switch (type)
             {
                 case HistoryType.FULLVERSIONTREE:
-                    id = (String)obj.getAttributeValue("i_chronicle_id");
+                    id = (String)obj.GetPropertyValue("i_chronicle_id");
                     auditQueryAttribute = "chronicle_id";
                     break;
                 case HistoryType.THISDOCUMENTONLY:
-                    id = (String)obj.getAttributeValue("r_object_id");
+                    id = (String)obj.GetPropertyValue("r_object_id");
                     auditQueryAttribute = "audited_obj_id";
                     break;
 
@@ -365,72 +78,6 @@ namespace Emc.Documentum.Rest.DataModel
             }
             String dql = String.Format("select * from dm_audittrail where {0}='{1}'", auditQueryAttribute, id);
             return ExecuteDQL<AuditEntry>(dql, new FeedGetOptions() { ItemsPerPage = itemsPerPage, IncludeTotal = true });
-        }
-
-        public T getObjectById<T>(string objectId) where T : PersistentObject
-        {
-            SingleGetOptions options = new SingleGetOptions { Inline = true, Links = true };
-            return getObjectById<T>(objectId, options);
-        }
-
-        public T getObjectById<T>(string objectId, SingleGetOptions options) where T : PersistentObject
-        {
-            return Client.GetObjectById<T>(objectId, options);
-        }
-
-        public PersistentObject getObjectByQualification(string dql, FeedGetOptions options)
-        {
-            return getObjectByQualification<PersistentObject>(dql, options);
-        }
-
-        public T getObjectByQualification<T>(string dql, FeedGetOptions options)
-        {
-            dql = "select * from " + dql;
-            string dqlUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.DQL.Rel);
-            string dqlUriWithoutTemplateParams = dqlUri.Substring(0, dqlUri.IndexOf("{"));
-            List<KeyValuePair<string, object>> pa = options == null ? new FeedGetOptions().ToQueryList() : options.ToQueryList();
-            pa.Add(new KeyValuePair<string, object>("dql", dql));
-            Feed<PersistentObject> feed = this.Client.Get<Feed<PersistentObject>>(dqlUriWithoutTemplateParams, pa);
-
-            List<Entry<PersistentObject>> objects = (List<Entry<PersistentObject>>)feed.Entries;
-            if (objects.Count == 0)
-            {
-                return default(T);
-            }
-            else
-            {
-                T obj = _client.Get<T>(objects[0].Content.Links[0].Href, null);
-                if(obj != null) (obj as Executable).SetClient(Client);
-                return obj;
-            }
-
-        }
-
-        private string _cabinetType = "dm_cabinet";
-        /// <summary>
-        /// When creating a new cabinet object, this will be the object type used.
-        /// </summary>
-        private string CabinetType
-        {
-            get { return _cabinetType;}
-            set { _cabinetType = value; }
-        }
-
-        private string _documentType = "dm_document";
-        public string DocumentType
-        {
-            get { return _documentType; }
-            set { _documentType = value; }
-        }
-       
-        private string _folderType = "dm_folder";
-        /// <summary>
-        /// When creating a folder object, this will be the default type used.
-        /// </summary>
-        public string FolderType
-        {
-            get {return _folderType;}
-            set { _folderType = value; }
         }
 
         /// <summary>
@@ -505,7 +152,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// </summary>
         /// <param name="doc"></param>
 
-        public void deleteAllDocumentVersions(RestDocument doc)
+        public void deleteAllDocumentVersions(Document doc)
         {
             GenericOptions options = new GenericOptions();
             options.SetQuery("del-version", "all");
@@ -516,7 +163,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// Delete the current version of a document 
         /// </summary>
         /// <param name="doc"></param>
-        public void deleteCurrentDocumentVersion(RestDocument doc)
+        public void deleteCurrentDocumentVersion(Document doc)
         {
             GenericOptions options = new GenericOptions();
             options.SetQuery("del-version", "selected");
@@ -557,7 +204,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             Folder origin = getFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", originPath), null);
             Folder destination = getFolderByQualification(String.Format("dm_folder where any r_folder_path='{0}'", destinationPath), null);
-            RestDocument doc = getObjectById<RestDocument>(objectId); // getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'", objectId), null);
+            Document doc = getObjectById<Document>(objectId); // getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'", objectId), null);
             return moveDocument(doc, origin, destination);
         }
 
@@ -590,13 +237,13 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Folderlink</returns>
         public FolderLink linkToFolder<T>(T obj, Folder folder)
         {
-            Folder hrefFolder = folder.GetHrefObject<Folder>();
-            String folderId = folder.getAttributeValue("r_object_id").ToString();
+            Folder hrefFolder = folder.CreateHrefObject<Folder>();
+            String folderId = folder.GetPropertyValue("r_object_id").ToString();
             PersistentObject pObj = (obj as PersistentObject);
-            if(pObj.getRepeatingValuesAsString("i_folder_id",",").Contains(folderId)) {
+            if(pObj.GetRepeatingValuesAsString("i_folder_id",",").Contains(folderId)) {
                 return pObj.GetFolderLinks(new FeedGetOptions { Inline = true, Links = true }).FindInlineEntry(folderId);
             }
-            return pObj.LinkTo(hrefFolder, null);
+            return pObj.LinkToFolder(hrefFolder, null);
         }
 
         /// <summary>
@@ -606,9 +253,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="objectID"></param>
         /// <param name="destinationPath"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument copyDocument(string objectID, string destinationPath)
+        public Document copyDocument(string objectID, string destinationPath)
         {
-            RestDocument doc = getObjectById<RestDocument>(objectID); // getDocumentByQualification("dm_document where r_object_id = '" + objectID + "'", null);
+            Document doc = getObjectById<Document>(objectID); // getDocumentByQualification("dm_document where r_object_id = '" + objectID + "'", null);
 
             Folder tempFolder = getOrCreateFolderByPath(destinationPath);
 
@@ -621,10 +268,10 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="doc"></param>
         /// <param name="destination"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument copyDocument(RestDocument doc, Folder destination)
+        public Document copyDocument(Document doc, Folder destination)
         {
-            RestDocument copyDoc = doc.GetHrefObject<RestDocument>();
-            RestDocument copiedDoc = destination.CreateSubObject<RestDocument>(copyDoc, null);
+            Document copyDoc = doc.CreateHrefObject<Document>();
+            Document copiedDoc = destination.CreateSubObject<Document>(copyDoc, null);
 
             return copiedDoc;
             
@@ -637,22 +284,22 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="origin"></param>
         /// <param name="destination"></param>
         /// <returns>Bool</returns>
-        public bool moveDocument(RestDocument doc, Folder origin, Folder destination) 
+        public bool moveDocument(Document doc, Folder origin, Folder destination) 
         {
             bool ret = true;
             try
             {
                 Feed<FolderLink> links = doc.GetFolderLinks(new FeedGetOptions { Inline = true, Links = true });
-                FolderLink folderLink3 = links.FindInlineEntryBySummary((string)origin.getAttributeValue("r_object_id"));
-                Folder moveTo = destination.GetHrefObject<Folder>();
+                FolderLink folderLink3 = links.FindInlineEntryBySummary((string)origin.GetPropertyValue("r_object_id"));
+                Folder moveTo = destination.CreateHrefObject<Folder>();
                 FolderLink movedFolderLink = folderLink3.MoveTo(moveTo, null);
                // movedFolderLink.Remove();
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unable to move RestDocument: " + doc.getAttributeValue("object_name")
-                    + "from " + origin.getAttributeValue("object_name") + " to " 
-                    + destination.getAttributeValue("object_name") + "\n" + e.StackTrace);
+                Console.WriteLine("Unable to move RestDocument: " + doc.GetPropertyValue("object_name")
+                    + "from " + origin.GetPropertyValue("object_name") + " to " 
+                    + destination.GetPropertyValue("object_name") + "\n" + e.StackTrace);
             }
             return ret;
         }
@@ -671,8 +318,8 @@ namespace Emc.Documentum.Rest.DataModel
             Folder obj = new Folder();
             obj.Name = "folder";
             obj.Type = FolderType;
-            obj.setAttributeValue("object_name", name );
-            obj.setAttributeValue("r_object_type", FolderType);
+            obj.SetPropertyValue("object_name", name );
+            obj.SetPropertyValue("r_object_type", FolderType);
            
             return parent.CreateSubFolder(obj, new FeedGetOptions { Inline = true, Links = true });
         }
@@ -689,8 +336,8 @@ namespace Emc.Documentum.Rest.DataModel
             Folder obj = new Folder();
             obj.Name = "folder";
             obj.Type = FolderType;
-            obj.setAttributeValue("object_name", name);
-            obj.setAttributeValue("r_object_type", objectType);
+            obj.SetPropertyValue("object_name", name);
+            obj.SetPropertyValue("r_object_type", objectType);
             return parent.CreateSubFolder(obj, new FeedGetOptions { Inline = true, Links = true });
         }
 
@@ -711,10 +358,10 @@ namespace Emc.Documentum.Rest.DataModel
             cabinets.Rel = "self";
             obj.Links.Add(cabinets);
             obj.Type = objectType;
-            obj.setAttributeValue("object_name", name);
-            obj.setAttributeValue("r_object_type", objectType);
+            obj.SetPropertyValue("object_name", name);
+            obj.SetPropertyValue("r_object_type", objectType);
             obj.Save();
-            return obj.fetch<Cabinet>();
+            return obj.Fetch<Cabinet>();
         }
 
         /// <summary>
@@ -723,7 +370,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="doc"></param>
         /// <param name="file"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument ImportDocumentAsNewVersion(RestDocument doc, FileInfo file)
+        public Document ImportDocumentAsNewVersion(Document doc, FileInfo file)
         {
             GenericOptions checkinOptions = new GenericOptions();
             checkinOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Name));
@@ -733,21 +380,22 @@ namespace Emc.Documentum.Rest.DataModel
             return ImportDocumentAsNewVersion(doc, file.OpenRead(), ObjectUtil.getMimeTypeFromFileName(file.Name), checkinOptions);
         }
 
-        public RestDocument ImportDocumentAsNewVersion(RestDocument doc, Stream contentStream, String mimeType, GenericOptions checkinOptions)
+        public Document ImportDocumentAsNewVersion(Document doc, Stream contentStream, String mimeType, GenericOptions checkinOptions)
         {
             Feed<OutlineAtomContent> versions = doc.GetVersionHistory<OutlineAtomContent>(null);
             List<Entry<OutlineAtomContent>> entries = versions.Entries;
 
             // If the document is not already checked out, check it out.
             if (!doc.IsCheckedOut()) doc = doc.Checkout();
-            RestDocument checkinDoc = NewDocument(doc.getAttributeValue("object_name").ToString());
-            if(!checkinOptions.pa.ContainsKey("format")) {
-                checkinOptions.SetQuery("format", doc.getAttributeValue("a_content_type"));
+            Document checkinDoc = NewDocument(doc.GetPropertyValue("object_name").ToString());
+            if(!checkinOptions.ContainsParam("format")) {
+                checkinOptions.SetQuery("format", doc.GetPropertyValue("a_content_type"));
             }
-            if(!checkinOptions.pa.ContainsKey("page")) {
+            if (!checkinOptions.ContainsParam("page"))
+            {
                 checkinOptions.SetQuery("page", 0);
             }
-            if(!checkinOptions.pa.ContainsKey("primary")) {
+            if(!checkinOptions.ContainsParam("primary")) {
                 checkinOptions.SetQuery("primary", true);
             }
             
@@ -760,9 +408,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="objectId"></param>
         /// <param name="file"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument ImportDocumentAsNewVersion(string objectId, FileInfo file)
+        public Document ImportDocumentAsNewVersion(string objectId, FileInfo file)
         {
-            RestDocument doc = getObjectById<RestDocument>(objectId); 
+            Document doc = getObjectById<Document>(objectId); 
             return ImportDocumentAsNewVersion(doc, file);
             
         }
@@ -774,48 +422,18 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="documentName"></param>
         /// <param name="repositoryPath"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument ImportNewDocument(FileInfo file, string documentName, string repositoryPath) {
+        public Document ImportNewDocument(FileInfo file, string documentName, string repositoryPath) {
             if (!repositoryPath.StartsWith("/")) throw new Exception("Repository path " + repositoryPath + " is not valid."
                  + " The path must be a fully qualified path");
             Folder importFolder = getOrCreateFolderByPath(repositoryPath);
             if (importFolder == null) throw new Exception("Unable to fetch or create folder by path: " + repositoryPath);
 
-            RestDocument newDocument =  NewDocument(documentName, DocumentType);
+            Document newDocument =  NewDocument(documentName, DocumentType);
             GenericOptions importOptions = new GenericOptions();
             importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Extension));
             newDocument = importFolder.ImportDocumentWithContent(newDocument, file.OpenRead(), ObjectUtil.getMimeTypeFromFileName(file.Name), importOptions);
 
             return newDocument;
-        }
-
-        public D2Document ImportNewD2Document(FileInfo file, string documentName, string repositoryPath, D2Configuration d2config)
-        {
-            //if (!repositoryPath.StartsWith("/")) throw new Exception("Repository path " + repositoryPath + " is not valid."
-            //     + " The path must be a fully qualified path");
-            //Folder importFolder = getOrCreateFolderByPath(repositoryPath);
-            //if (importFolder == null) throw new Exception("Unable to fetch or create folder by path: " + repositoryPath);
-
-            D2Document newDocument = new D2Document();
-            newDocument.setAttributeValue("object_name", documentName);
-            newDocument.setAttributeValue("r_object_type", "dm_document");
-            if (d2config != null) newDocument.Configuration = d2config;
-            GenericOptions importOptions = new GenericOptions();
-            importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Extension));
-            D2Document created = ImportD2DocumentWithContent(newDocument, file.OpenRead(), ObjectUtil.getMimeTypeFromFileName(file.Name), importOptions);
-
-            return created;
-        }
-
-        public D2Document ImportD2DocumentWithContent(D2Document newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)
-        {
-            Dictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
-            otherParts.Add(otherPartStream, otherPartMime);
-            return Client.Post<D2Document>(
-                this.Links,
-                LinkRelations.OBJECT_CREATION.Rel,
-                newObj,
-                otherParts,
-                options);
         }
 
         public string getRepositoryUri()
@@ -836,7 +454,7 @@ namespace Emc.Documentum.Rest.DataModel
                  + " The path must be a fully qualified path");
             Folder importFolder = getOrCreateFolderByPath(repositoryPath);
             if (importFolder == null) throw new Exception("Unable to fetch or create folder by path: " + repositoryPath);
-            RestDocument newDocument = NewDocument(documentName, DocumentType);
+            Document newDocument = NewDocument(documentName, DocumentType);
             GenericOptions importOptions = new GenericOptions();
             importOptions.SetQuery("format", ObjectUtil.getDocumentumFormatForFile(file.Extension));
 
@@ -862,16 +480,14 @@ namespace Emc.Documentum.Rest.DataModel
             cabinets.Rel = "self";
             obj.Links.Add(cabinets);
             obj.Type = "dm_cabinet";
-            obj.setAttributeValue("object_name", name);
-            obj.setAttributeValue("r_object_type", CabinetType);
+            obj.SetPropertyValue("object_name", name);
+            obj.SetPropertyValue("r_object_type", CabinetType);
             obj.Save();
             return obj;
         }
 
         public enum RecordType
         {
-            
-
             MLAT,
             Extradition
         }
@@ -888,13 +504,13 @@ namespace Emc.Documentum.Rest.DataModel
             FeedGetOptions opts = new FeedGetOptions { Inline = true, Links = true};
             
             Folder recordFolder = getFolderByPath("/SystemA File Plan/INC/" + type.ToString());
-            string[] folderIds = folder.getRepeatingValuesAsString("i_folder_id", ",").Split(new string[] {","}, StringSplitOptions.RemoveEmptyEntries);
-            if(!folderIds.Contains(recordFolder.getAttributeValue("r_object_id").ToString())) {
-                Folder linkFolder = recordFolder.GetHrefObject<Folder>();
-                FolderLink folderLink2 = folder.LinkTo(linkFolder, null);
+            string[] folderIds = folder.GetRepeatingValuesAsString("i_folder_id", ",").Split(new string[] {","}, StringSplitOptions.RemoveEmptyEntries);
+            if(!folderIds.Contains(recordFolder.GetPropertyValue("r_object_id").ToString())) {
+                Folder linkFolder = recordFolder.CreateHrefObject<Folder>();
+                FolderLink folderLink2 = folder.LinkToFolder(linkFolder, null);
             }
             
-            Feed<PersistentObject> feed = UpdateCloseDate(folder.getAttributeValue("r_object_id").ToString(), closeDate);
+            Feed<PersistentObject> feed = UpdateCloseDate(folder.GetPropertyValue("r_object_id").ToString(), closeDate);
             return feed != null ? ObjectUtil.getFeedAsList(feed, true) : null;
         }
         
@@ -977,7 +593,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// </summary>
         /// <param name="objectType"></param>
         /// <returns>RestDocument</returns>
-        public RestDocument NewDocument(string objectType)
+        public Document NewDocument(string objectType)
         {
             return NewDocument(null, objectType);
         }
@@ -989,14 +605,14 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="objectName">Used to set the document's name</param>
         /// <param name="objectType">Indicates the object type of the document</param>
         /// <returns>RestDocument</returns>
-        public RestDocument NewDocument(string objectName, string objectType)
+        public Document NewDocument(string objectName, string objectType)
         {
-            RestDocument doc = new RestDocument();
+            Document doc = new Document();
             doc.Name = "document";
             doc.Type = objectType;
             if(objectName != null && !objectName.Trim().Equals(""))
-                doc.setAttributeValue("object_name", objectName);
-            doc.setAttributeValue("r_object_type", objectType);
+                doc.SetPropertyValue("object_name", objectName);
+            doc.SetPropertyValue("r_object_type", objectType);
             return doc;
         }
 
@@ -1065,7 +681,7 @@ namespace Emc.Documentum.Rest.DataModel
                         {
                             SingleGetOptions options = new SingleGetOptions();
                             options.SetQuery("media-url-policy", "local");
-                            RestDocument doc = getObjectById<RestDocument>(obj.getAttributeValue("r_object_id").ToString());// getDocumentByQualification("dm_document where r_object_id='" + obj.getAttributeValue("r_object_id") + "'", null);
+                            Document doc = getObjectById<Document>(obj.GetPropertyValue("r_object_id").ToString());// getDocumentByQualification("dm_document where r_object_id='" + obj.getAttributeValue("r_object_id") + "'", null);
                             ContentMeta primaryContentMeta = doc.GetPrimaryContent(options);
                             FileInfo downloadedContentFile = primaryContentMeta.DownloadContentMediaFile();
                             // string path = "c:/temp/case" + obj.getAttributeValue("r_folder_path").ToString();
@@ -1092,7 +708,7 @@ namespace Emc.Documentum.Rest.DataModel
                             }
                             else
                             {
-                                zipPath = obj.getAttributeValue("r_folder_path").ToString();
+                                zipPath = obj.GetPropertyValue("r_folder_path").ToString();
                                 zipPath = zipPath.Substring(zipPath.IndexOf(folderName));
                                 if (zipPath.Length == 0)
                                 { zipPath = zipPath + filename; }
@@ -1151,37 +767,4 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
     } // End Repository Class
-
-    /// <summary>
-    /// Information about the content server(s) available
-    /// </summary>
-    [DataContract(Name = "server", Namespace = "http://identifiers.emc.com/vocab/documentum")] 
-    public class Server
-    {
-        /// <summary>
-        /// The docbroker used to resolve the repository
-        /// </summary>
-        [DataMember(Name = "docbroker")]
-        public string Docbroker { get; set; }
-
-        /// <summary>
-        /// The name of the repository that is available for use
-        /// </summary>
-        [DataMember(Name = "name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// The hostname of the server the repository connection is made to
-        /// </summary>
-        [DataMember(Name = "host")]
-        public string Host { get; set; }
-
-        /// <summary>
-        /// Content server version information
-        /// </summary>
-        [DataMember(Name = "version")]
-        public string Version { get; set; }
-    }
-
-
 }

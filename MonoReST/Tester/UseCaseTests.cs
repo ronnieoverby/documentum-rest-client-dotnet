@@ -1,4 +1,5 @@
 ﻿using Emc.Documentum.Rest.DataModel;
+using Emc.Documentum.Rest.DataModel.D2;
 using Emc.Documentum.Rest.CustomModel;
 using Emc.Documentum.Rest.Net;
 using Emc.Documentum.Rest.Http.Utility;
@@ -308,7 +309,7 @@ namespace Emc.Documentum.Rest.Test
         }
 
         protected List<String> IDsWithRenditions { get; set; }
-        protected Repository CurrentRepository { get; set; }
+        protected D2Repository CurrentRepository { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -319,7 +320,7 @@ namespace Emc.Documentum.Rest.Test
                 long testStart = DateTime.Now.Ticks;
                 long tStart = DateTime.Now.Ticks;
 
-                RestService home = client.Get<RestService>(RestHomeUri, null);
+                HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
                 if (home == null)
                 {
                     WriteOutput("\nUnable to get Rest Service at: " + RestHomeUri + " check to see if the service is available.");
@@ -329,7 +330,7 @@ namespace Emc.Documentum.Rest.Test
                 WriteOutput("Took " + ((DateTime.Now.Ticks - testStart)/TimeSpan.TicksPerMillisecond) + "ms to get RestService");
             //Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
             //Repository CurrentRepository = repositories.GetRepository(repositoryName);
-            CurrentRepository = home.GetRepository(repositoryName);
+            CurrentRepository = home.GetRepository<D2Repository>(repositoryName);
             ProductInfo productInfo = home.GetProductInfo();
             if (CurrentRepository == null) throw new Exception("Unable to login to the CurrentRepository, please see server logs for more details.");
             // Set our default folder and document types. 
@@ -394,12 +395,12 @@ namespace Emc.Documentum.Rest.Test
         protected void ExportFiles()
         {
             FeedGetOptions options = new FeedGetOptions { ItemsPerPage = 10 };
-            Feed<RestDocument> feedDocs = CurrentRepository.ExecuteDQL<RestDocument>("select r_object_id from dm_document where folder('" + ProcessBasePath + parentFolderId + "', DESCEND)", options);
-            List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(feedDocs, true);
+            Feed<Document> feedDocs = CurrentRepository.ExecuteDQL<Document>("select r_object_id from dm_document where folder('" + ProcessBasePath + parentFolderId + "', DESCEND)", options);
+            List<Document> docs = ObjectUtil.getFeedAsList<Document>(feedDocs, true);
             StringBuilder ids = new StringBuilder();
             int pass = 0;
-            foreach(RestDocument doc in docs) {
-                string id = doc.getAttributeValue("r_object_id").ToString();
+            foreach(Document doc in docs) {
+                string id = doc.GetPropertyValue("r_object_id").ToString();
                 if (pass == 0)
                 {
                     pass++;
@@ -424,16 +425,16 @@ namespace Emc.Documentum.Rest.Test
             
             Random rnd = new Random();
             //get list of templates
-            Feed<RestDocument> results = CurrentRepository.ExecuteDQL<RestDocument>(String.Format("select * from dm_document where FOLDER('/Templates') "), new FeedGetOptions { Inline = true, Links = true });
-            List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(results, true);
+            Feed<Document> results = CurrentRepository.ExecuteDQL<Document>(String.Format("select * from dm_document where FOLDER('/Templates') "), new FeedGetOptions { Inline = true, Links = true });
+            List<Document> docs = ObjectUtil.getFeedAsList<Document>(results, true);
             int resultSamples = docs.Count;
 
             WriteOutput(String.Format("\t[TemplateList] Returning list of templates..."));
-            foreach (RestDocument doc in docs)
+            foreach (Document doc in docs)
             {
                 WriteOutput(String.Format("\t\t\tTemplate Name: {0} ID: {1}",
-                        doc.getAttributeValue("object_name").ToString(),
-                        doc.getAttributeValue("r_object_id").ToString()));
+                        doc.GetPropertyValue("object_name").ToString(),
+                        doc.GetPropertyValue("r_object_id").ToString()));
             }
             List<string> req = childList;
             for (int i = 0; i < 10; i++)
@@ -442,17 +443,17 @@ namespace Emc.Documentum.Rest.Test
                 string movePath = trackerDoc.getPath();
                 string childId = trackerDoc.ChildId;
                 //select one of the documents
-                RestDocument template = docs[rnd.Next(0, resultSamples)];
-                RestDocument newDoc = CurrentRepository.copyDocument(template.getAttributeValue("r_object_id").ToString(), ProcessBasePath + movePath);
+                Document template = docs[rnd.Next(0, resultSamples)];
+                Document newDoc = CurrentRepository.copyDocument(template.GetPropertyValue("r_object_id").ToString(), ProcessBasePath + movePath);
 
-                newDoc.setAttributeValue("subject", "Created From Template: " + template.getAttributeValue("object_name"));
+                newDoc.SetPropertyValue("subject", "Created From Template: " + template.GetPropertyValue("object_name"));
                 string documentName = ObjectUtil.NewRandomDocumentName("FROMTEMPLATE");
-                newDoc.setAttributeValue("object_name", documentName);
+                newDoc.SetPropertyValue("object_name", documentName);
                 newDoc.Save();
-                string objectId = newDoc.getAttributeValue("r_object_id").ToString();
+                string objectId = newDoc.GetPropertyValue("r_object_id").ToString();
                 //String childId = parentFolderId + " CHILD-" + new Random().Next(0, 5);
                 Tracker.Add(new DocumentTracker(objectId, parentFolderId, childId));
-                WriteOutput("\t[CreateDocumentFromTemplate] Created document " + documentName + " from template " + template.getAttributeValue("object_name").ToString());
+                WriteOutput("\t[CreateDocumentFromTemplate] Created document " + documentName + " from template " + template.GetPropertyValue("object_name").ToString());
             }
         }
 
@@ -462,16 +463,16 @@ namespace Emc.Documentum.Rest.Test
 
             //WriteOutput("Pausing for ten seconds to make sure indexer has caught up for full text search test....");
             //Thread.Sleep(10000);
-            Search search = new Search();
-            search.Query = "document";
+            SearchOptions search = new SearchOptions();
+            search.SearchQuery = "document";
             search.Locations = ProcessBasePath + parentFolderId; // childList[new Random().Next(0, childList.Count)];
 
             search.ItemsPerPage = 20;
             //search.PageNumber = 1;
             int totalResults = 0;
             double totalPages = 0d;
-            WriteOutput("[SearchResults] Return a list of documents using search criteria: " + search.Query + " Location: '" + search.Locations + "'");
-            SearchFeed<RestDocument> feedResults = CurrentRepository.ExecuteSearch<RestDocument>(search);
+            WriteOutput("[SearchResults] Return a list of documents using search criteria: " + search.SearchQuery + " Location: '" + search.Locations + "'");
+            Feed<Document> feedResults = CurrentRepository.ExecuteSearch<Document>(search);
             if (feedResults != null)
             {
                 totalResults = feedResults.Total;
@@ -480,9 +481,9 @@ namespace Emc.Documentum.Rest.Test
 
                 for (int i = 0; i < totalPages; i++)
                 {
-                    foreach (SearchEntry<RestDocument> result in feedResults.Entries)
+                    foreach (Entry<Document> result in feedResults.Entries)
                     {
-                        WriteOutput("\t[SearchResults] Search - RestDocument: " + result.Content.getAttributeValue("object_name").ToString() + " Summary: " + result.Summary
+                        WriteOutput("\t[SearchResults] Search - RestDocument: " + result.Content.GetPropertyValue("object_name").ToString() + " Summary: " + result.Summary
                             + " Score: " + result.Score + " Terms: " + String.Join(",", result.Terms));
                         docProcessed++;
                     }
@@ -509,15 +510,15 @@ namespace Emc.Documentum.Rest.Test
             int resultSamples = Tracker.Count < 5? Tracker.Count : 5;
             for(int i=0; i<resultSamples;i++) {
                 string path = ProcessBasePath + Tracker[rnd.Next(0,resultSamples)];
-                Feed<RestDocument> results = CurrentRepository.ExecuteDQL<RestDocument>(
+                Feed<Document> results = CurrentRepository.ExecuteDQL<Document>(
                     String.Format("select * from dm_document where folder('{0}', DESCEND)", path), new FeedGetOptions { Inline=true, Links=true });
-                List<RestDocument> docs = ObjectUtil.getFeedAsList<RestDocument>(results, true);
+                List<Document> docs = ObjectUtil.getFeedAsList<Document>(results, true);
                 WriteOutput(String.Format("\t\t[ReturnListOfDocumentsFromQuery] Returning list of documents in path [{0}]", path));
-                foreach (RestDocument doc in docs)
+                foreach (Document doc in docs)
                 {
                     WriteOutput(String.Format("\t\t\tName: {0} ID: {1}", 
-                        doc.getAttributeValue("object_name").ToString(), 
-                        doc.getAttributeValue("r_object_id").ToString()));
+                        doc.GetPropertyValue("object_name").ToString(), 
+                        doc.GetPropertyValue("r_object_id").ToString()));
                 }
             }
             
@@ -532,12 +533,12 @@ namespace Emc.Documentum.Rest.Test
                 DocumentTracker aDoc = myList[i];
                 myList.Remove(aDoc);
 
-                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(myList[i].DocumentId); 
+                Document doc = CurrentRepository.getObjectById<Document>(myList[i].DocumentId); 
                 //RestDocument doc = CurrentRepository.getDocumentByQualification(String.Format("dm_document where r_object_id = '{0}'",
                 //    myList[i].DocumentId), new FeedGetOptions { Inline = true, Links = true });
                 Feed<OutlineAtomContent> versions = doc.GetVersionHistory<OutlineAtomContent>(null);
                 List <Entry<OutlineAtomContent>> entries = versions.Entries;
-                WriteOutput("\t\tCurrentDocumentVersion: " + doc.getRepeatingValuesAsString("r_version_label", ",") + " ID: " + doc.getAttributeValue("r_object_id").ToString());
+                WriteOutput("\t\tCurrentDocumentVersion: " + doc.GetRepeatingValuesAsString("r_version_label", ",") + " ID: " + doc.GetPropertyValue("r_object_id").ToString());
                 WriteOutput("\t\tVersion Count Prior to Importing New Version:" + entries.Count);
                 if(!doc.IsCheckedOut()) doc = doc.Checkout();// Handles when you unwind during debugging and doc was checked out before.
                 if (doc.IsCheckedOut())
@@ -549,7 +550,7 @@ namespace Emc.Documentum.Rest.Test
                         doc = doc.Checkout();
                         if (doc.IsCheckedOut())
                         {
-                            WriteOutput("\t\t[CheckOut] - Checked out document after cancel checkout..., document is checked out by: " +doc.getLockOwner());        
+                            WriteOutput("\t\t[CheckOut] - Checked out document after cancel checkout..., document is checked out by: " +doc.GetCheckedOutBy());        
                         } else {
                             WriteOutput("\t\t[CheckOut] - #####FAILED##### CHECK OUT DOCUMENT");
                         }
@@ -575,16 +576,16 @@ namespace Emc.Documentum.Rest.Test
                 Feed<OutlineAtomContent> newVersions = doc.GetVersionHistory<OutlineAtomContent>(null);
                 List <Entry<OutlineAtomContent>> newEntries = newVersions.Entries;
                 WriteOutput("\t\tNew Version Count: " + newEntries.Count);
-                WriteOutput("\t\tNewDocumentVersion: " + doc.getRepeatingValuesAsString("r_version_label", ",") + " ID: " + doc.getAttributeValue("r_object_id").ToString());
+                WriteOutput("\t\tNewDocumentVersion: " + doc.GetRepeatingValuesAsString("r_version_label", ",") + " ID: " + doc.GetPropertyValue("r_object_id").ToString());
                 WriteOutput("\t\t[ListVersions] - List of document versions:");
                 WriteOutput("Versions:");
-                List<RestDocument> allVersions = CurrentRepository.getAllDocumentVersions(doc);
-                foreach (RestDocument vDoc in allVersions)
+                List<Document> allVersions = CurrentRepository.getAllDocumentVersions(doc);
+                foreach (Document vDoc in allVersions)
                 {
                     WriteOutput(String.Format("\t\t\t ChronicleID: {0} ObjectID: {1} VersionLabel: {2}",
-                        doc.getAttributeValue("i_chronicle_id").ToString(),
-                        vDoc.getAttributeValue("r_object_id").ToString(),
-                        vDoc.getRepeatingValuesAsString("r_version_label", ",")));
+                        doc.GetPropertyValue("i_chronicle_id").ToString(),
+                        vDoc.GetPropertyValue("r_object_id").ToString(),
+                        vDoc.GetRepeatingValuesAsString("r_version_label", ",")));
                 }
             }
             
@@ -593,9 +594,9 @@ namespace Emc.Documentum.Rest.Test
         public void ViewDocument(String path, DocumentTracker tracker, bool openDocument)
         {
 
-            RestDocument doc = CurrentRepository.getObjectById<RestDocument>(tracker.DocumentId);
+            Document doc = CurrentRepository.getObjectById<Document>(tracker.DocumentId);
 
-            ContentMeta contentMeta = doc.getContent();
+            ContentMeta contentMeta = doc.GetPrimaryContent(new SingleGetOptions { View = ":all"});
             if (contentMeta == null)
             {
                 WriteOutput("!!!!!!!!!!!!!!!!VIEW TEST FAILURE!!!!!!!!!!!!!!!!!!!!");
@@ -621,9 +622,9 @@ namespace Emc.Documentum.Rest.Test
                 DocumentTracker aDoc = ObjectUtil.getRandomObjectFromList<DocumentTracker>(newList);
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
-                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(aDoc.DocumentId); //CurrentRepository.getDocumentByQualification(
+                Document doc = CurrentRepository.getObjectById<Document>(aDoc.DocumentId); //CurrentRepository.getDocumentByQualification(
                     //String.Format("dm_document(all) where r_object_id = '{0}'",aDoc.DocumentId), null);
-                WriteOutput("\t" + aDoc.DocumentId + ":" + doc.getAttributeValue("object_name").ToString() + " - RestDocument History:");
+                WriteOutput("\t" + aDoc.DocumentId + ":" + doc.GetPropertyValue("object_name").ToString() + " - RestDocument History:");
                 Feed<AuditEntry> auditInfo = CurrentRepository.getDocumentHistory(HistoryType.THISDOCUMENTONLY, doc);
                 List<AuditEntry> entries = ObjectUtil.getFeedAsList(auditInfo,true);
                 //List<Entry<AuditEntry>> entries = (List<Entry<AuditEntry>>)auditInfo.Entries;
@@ -650,13 +651,13 @@ namespace Emc.Documentum.Rest.Test
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
                 String currentPath = ProcessBasePath + aDoc.getPath();
-                RestDocument docToMove = CurrentRepository.getObjectById<RestDocument>(aDoc.DocumentId);
+                Document docToMove = CurrentRepository.getObjectById<Document>(aDoc.DocumentId);
                 List<String> childPathAndFolder = ObjectUtil.getPathAndFolderNameFromPath(currentPath);
                 String parentFolderPath = childPathAndFolder[0];
                 String childFolderName = childPathAndFolder[1];
                 Folder childFolder = CurrentRepository.getFolderByQualification(
                     String.Format("dm_folder where r_object_id = '{0}'", 
-                    docToMove.getRepeatingValue("i_folder_id", 0)), new FeedGetOptions { Inline = true, Links = true });
+                    docToMove.GetRepeatingValue("i_folder_id", 0)), new FeedGetOptions { Inline = true, Links = true });
                 List<String> parentPathAndFolder = ObjectUtil.getPathAndFolderNameFromPath(parentFolderPath);
                 String folderPath = parentPathAndFolder[0];
                 String parentFolderName = parentPathAndFolder[1];
@@ -682,18 +683,18 @@ namespace Emc.Documentum.Rest.Test
 
             WriteOutput("[CreateOrGetFolderPath] - Creating or getting folder by path: " + tempPath);
             Folder tempFolder = CurrentRepository.getOrCreateFolderByPath(tempPath);
-            WriteOutput("\tFolder: " + tempFolder.getAttributeValue("object_name") + ":" 
-                + tempFolder.getAttributeValue("r_object_id") + " successfully created!");
+            WriteOutput("\tFolder: " + tempFolder.GetPropertyValue("object_name") + ":" 
+                + tempFolder.GetPropertyValue("r_object_id") + " successfully created!");
             WriteOutput("\tCreating " + numDocs + " random documents.");
             string previousChildId = null;
             for (int i = 0; i < numDocs; i++)
             {
                 FileInfo file = ObjectUtil.getRandomFileFromDirectory(randomFilesDirectory);
                 
-                RestDocument tempDoc = CurrentRepository.ImportNewDocument(file, testPrefix + "-" + file.Name, tempPath);
+                Document tempDoc = CurrentRepository.ImportNewDocument(file, testPrefix + "-" + file.Name, tempPath);
                 WriteOutput("\t\t[ImportDocument] - RestDocument " + file.FullName + " imported as " 
-                    + tempDoc.getAttributeValue("object_name") + " ObjectID: " 
-                    + tempDoc.getAttributeValue("r_object_id").ToString());
+                    + tempDoc.GetPropertyValue("object_name") + " ObjectID: " 
+                    + tempDoc.GetPropertyValue("r_object_id").ToString());
                 WriteOutput("\t\t\t[DeDuplication] - Performing Duplicate Detection on content in holding area....");
                 CheckDuplicates(tempDoc, tempPath);
 
@@ -701,12 +702,12 @@ namespace Emc.Documentum.Rest.Test
                 // parentFolder 
                 
                 String childId = parentFolderId + " CHILD-" + new Random().Next(0,5);
-                String objectId = (String)tempDoc.getAttributeValue("r_object_id");
-                WriteOutput("[CreateAndtrackerDocument] \t\tCreated " + tempDoc.getAttributeValue("object_name") + ":" + objectId + " Moveing to Parent: " 
+                String objectId = (String)tempDoc.GetPropertyValue("r_object_id");
+                WriteOutput("[CreateAndtrackerDocument] \t\tCreated " + tempDoc.GetPropertyValue("object_name") + ":" + objectId + " Moveing to Parent: " 
                     + parentFolderId + " Child: " + childId);
-                WriteOutput("[ChangeExistingDocument] - ReFetching and Setting title attribute");
-                RestDocument doc = tempDoc.fetch<RestDocument>();
-                doc.setAttributeValue("title", "Set properties test");
+                WriteOutput("[ChangeExiFetchDocument] - ReFetching and Setting title attribute");
+                Document doc = tempDoc.Fetch<Document>();
+                doc.SetPropertyValue("title", "Set properties test");
                 doc.Save();
                 Tracker.Add(new DocumentTracker(objectId, parentFolderId, childId));
                 // To show we can move the same document to multiple childFolderDocs
@@ -719,26 +720,26 @@ namespace Emc.Documentum.Rest.Test
             } // Done with temp creation loop
         }
 
-        protected void CheckDuplicates(RestDocument doc, string path)
+        protected void CheckDuplicates(Document doc, string path)
         {
-            List<PersistentObject> dupes = CurrentRepository.CheckForDuplicate((String)doc.getAttributeValue("r_object_id"), path);
+            List<PersistentObject> dupes = CurrentRepository.CheckForDuplicate((String)doc.GetPropertyValue("r_object_id"), path);
             StringBuilder dupeList = new StringBuilder();
             if (dupes.Count != 0)
             {
                 if (printResult)
                 {
                     bool first = true;
-                    WriteOutput("\t\t\tDocument: " + doc.getAttributeValue("object_name") + ":" + doc.getAttributeValue("r_object_id"));
+                    WriteOutput("\t\t\tDocument: " + doc.GetPropertyValue("object_name") + ":" + doc.GetPropertyValue("r_object_id"));
                     foreach (PersistentObject pObj in dupes)
                     {
-                        WriteOutput(String.Format("DUPLICATE OF: {0}", pObj.getRepeatingValuesAsString("parent_id",",").ToString()));
+                        WriteOutput(String.Format("DUPLICATE OF: {0}", pObj.GetRepeatingValuesAsString("parent_id",",").ToString()));
                         if (first)
                         {
-                            dupeList.Append("'" + pObj.getAttributeValue("parent_id") + "'");
+                            dupeList.Append("'" + pObj.GetPropertyValue("parent_id") + "'");
                         }
                         else
                         {
-                            dupeList.Append(",'" + pObj.getAttributeValue("parent_id") + "'");
+                            dupeList.Append(",'" + pObj.GetPropertyValue("parent_id") + "'");
                         }
                     }
                     
@@ -769,7 +770,7 @@ namespace Emc.Documentum.Rest.Test
             //WriteOutput("Getting the holding folder for documents prior to Parent/Child movement...");
             Folder tempFolder = CurrentRepository.getFolderByQualification("dm_folder where any r_folder_path = '" 
                 + tempPath + "'", new FeedGetOptions{ Inline = true, Links = true });
-            WriteOutput("\tMoveing Documents from folder: " + tempFolder.getAttributeValue("object_name"));
+            WriteOutput("\tMoveing Documents from folder: " + tempFolder.GetPropertyValue("object_name"));
             foreach (DocumentTracker trackerDoc in Tracker)
             {
                 String parentFolderId = trackerDoc.ParentId;
@@ -779,15 +780,15 @@ namespace Emc.Documentum.Rest.Test
                 // Our parentFolder/child tracker for doing record declaration later
                 addSupportingDoc(movePath);
                 Folder destinationDir = CurrentRepository.getOrCreateFolderByPath(movePath);
-                RestDocument docToCopy = CurrentRepository.getObjectById<RestDocument>(trackerDoc.DocumentId); // getDocumentByQualification("dm_document where r_object_id = '"
+                Document docToCopy = CurrentRepository.getObjectById<Document>(trackerDoc.DocumentId); // getDocumentByQualification("dm_document where r_object_id = '"
                      //+ trackerDoc.DocumentId + "'", new FeedGetOptions { Inline = true, Links = true });
                 // To copy the document, we need to get a reference object
                 CheckDuplicates(docToCopy, ProcessBasePath + trackerDoc.getPath());
-                RestDocument copiedDoc = destinationDir.CreateSubObject<RestDocument>(docToCopy.GetCopy<RestDocument>(), null);
-                WriteOutput("\t[CopyDocument] - Moveed RestDocument: " + copiedDoc.getAttributeValue("object_name") + " ID:" 
+                Document copiedDoc = destinationDir.CreateSubObject<Document>(docToCopy.CreateCopyObject<Document>(), null);
+                WriteOutput("\t[CopyDocument] - Moveed RestDocument: " + copiedDoc.GetPropertyValue("object_name") + " ID:" 
                     + trackerDoc.DocumentId + " to " + ProcessBasePath + trackerDoc.getPath());
                 // Update the trackerDocumentId to the newly copied document
-                trackerDoc.DocumentId = copiedDoc.getAttributeValue("r_object_id").ToString();
+                trackerDoc.DocumentId = copiedDoc.GetPropertyValue("r_object_id").ToString();
             }
 
             // Delete our temp folder
@@ -808,7 +809,7 @@ namespace Emc.Documentum.Rest.Test
                 // Make sure we do not use this again
                 newList.Remove(aDoc);
                 String objectId = aDoc.DocumentId;
-                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId); //getDocumentByQualification(
+                Document doc = CurrentRepository.getObjectById<Document>(objectId); //getDocumentByQualification(
                 //String.Format("dm_document where r_object_id = '{0}'", objectId), null);
 
                 FileInfo file = ObjectUtil.getRandomFileFromDirectory(randomFilesDirectory);
@@ -830,13 +831,13 @@ namespace Emc.Documentum.Rest.Test
                 Feed<ContentMeta> contents = doc.GetContents<ContentMeta>(new FeedGetOptions { Inline = true });
                 List<Entry<ContentMeta>> entries = (List<Entry<ContentMeta>>)contents.Entries;
                 WriteOutput("\t\t[AddRendition] - Rendition Added for RestDocument ID: " 
-                    + doc.getAttributeValue("r_object_id") + ":" 
-                    + doc.getAttributeValue("object_name"));
+                    + doc.GetPropertyValue("r_object_id") + ":" 
+                    + doc.GetPropertyValue("object_name"));
                 foreach (Entry<ContentMeta> entry in entries)
                 {
                     ContentMeta rendition = entry.Content;
-                    WriteOutput("\t\t\tRendition Format: " + rendition.getAttributeValue("full_format")
-                        + " Modifier: " + rendition.getRepeatingString("page_modifier", 0)); //((Object[])rendition.getAttributeValue("page_modifier"))[0].ToString());
+                    WriteOutput("\t\t\tRendition Format: " + rendition.GetPropertyValue("full_format")
+                        + " Modifier: " + rendition.GetRepeatingString("page_modifier", 0)); //((Object[])rendition.getAttributeValue("page_modifier"))[0].ToString());
                 }
                 idsWithRenditions.Add(objectId);
             }
@@ -850,10 +851,10 @@ namespace Emc.Documentum.Rest.Test
             foreach (string objectId in idsWithRenditions)
             {
                 renditionNumber++;
-                RestDocument doc = CurrentRepository.getObjectById<RestDocument>(objectId); //.getDocumentByQualification(
+                Document doc = CurrentRepository.getObjectById<Document>(objectId); //.getDocumentByQualification(
                     //String.Format("dm_document where r_object_id = '{0}'", objectId), null);
 
-                ContentMeta renditionMeta = doc.getRenditionByModifier("Test");
+                ContentMeta renditionMeta = doc.GetRenditionByModifier("Test");
                 if (renditionMeta == null)
                 {
                     WriteOutput("!!!!!!!!!!!!!!!!RENDITION VIEW TEST FAILURE!!!!!!!!!!!!!!!!!!!!");

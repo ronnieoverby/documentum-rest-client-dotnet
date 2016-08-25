@@ -9,90 +9,76 @@ using System.Runtime.InteropServices;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+     /// <summary>
+     /// Home document resource model, which is the entry point of the entire Documentum REST Services
+     /// </summary>
     [DataContract(Name = "services", Namespace = "http://identifiers.emc.com/vocab/documentum")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class RestService : Executable
+    public partial class HomeDocument
     {
+        /// <summary>
+        /// Root resources under home document
+        /// </summary>
         [DataMember(Name = "resources")]
         public Resources Resources { 
             get; 
             set; 
         }
 
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
             return serializer.Serialize(this);
         }
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-        /// <summary>
-        /// Get product info resource
-        /// </summary>
-        /// <returns></returns>
-        public ProductInfo GetProductInfo()
-        {
-            string productInfoUri = this.Resources.About.Href;
-            return Client.Get<ProductInfo>(productInfoUri, null);
-        }
-
-        /// <summary>
-        /// Get repositories feed requires Options can be null
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public Feed<T> GetRepositories<T>(FeedGetOptions options)
-        {
-            string repositoriesUri = this.Resources.Repositories.Href;
-            Feed<T> feed = Client.Get<Feed<T>>(repositoriesUri, options == null ? null : options.ToQueryList());
-            feed.Client = Client;
-            return feed;
-        }
-
-        public Repository GetRepository(string repositoryName)
-        {
-            Repository repository = Client.Get<Repository>(this.Resources.Repositories.Href + "/" + repositoryName, null);
-            if (repository != null)
-            {
-                Client.RepositoryBaseUri = repository.getRepositoryUri();
-                repository.Client = Client;
-            }
-            return repository;
-        }
     }
 
+    /// <summary>
+    /// Resources model within home document
+    /// </summary>
     [DataContract(Name = "resources", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
     public class Resources
     {
+        /// <summary>
+        /// Repositories entry
+        /// </summary>
         [DataMember(Name = "http://identifiers.emc.com/linkrel/repositories")]
         public Resource Repositories { get; set; }
 
+        /// <summary>
+        /// Product info entry
+        /// </summary>
         [DataMember(Name = "about")]
         public Resource About { get; set; }
     }
 
-    [DataContract(Name = "resources", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    /// <summary>
+    ///  Resource model within home document
+    /// </summary>
+    [DataContract(Name = "resource", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
     public class Resource
     {
+        /// <summary>
+        /// Href
+        /// </summary>
         [DataMember(Name = "href")]
         public string Href { get; set; }
 
+        /// <summary>
+        /// Hints
+        /// </summary>
         [DataMember(Name = "hints")]
         public Hints Hints { get; set; }
 
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             StringBuilder builder = new StringBuilder();
@@ -107,15 +93,23 @@ namespace Emc.Documentum.Rest.DataModel
         
     }
 
+    /// <summary>
+    /// Hints model within home document
+    /// </summary>
     [DataContract(Name = "hints", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
     public class Hints
     {
+        /// <summary>
+        /// Allowed methods
+        /// </summary>
         [DataMember(Name = "allow")]
         public List<string> Allow { get; set; }
 
+        /// <summary>
+        /// Supported media types
+        /// </summary>
         [DataMember(Name = "representations")]
         public List<string> Representations { get; set; }
     }
-
-
 }

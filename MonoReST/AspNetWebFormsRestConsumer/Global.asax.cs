@@ -8,6 +8,8 @@ using System.Web.Security;
 using AspNetWebFormsRestConsumer;
 using Emc.Documentum.Rest.Net;
 using Emc.Documentum.Rest.DataModel;
+using Emc.Documentum.Rest.DataModel.D2;
+
 
 namespace AspNetWebFormsRestConsumer
 {
@@ -17,7 +19,7 @@ namespace AspNetWebFormsRestConsumer
         public static String Password { get; set; }
         public static String Docbase { get; set; }
 
-        public static Repository Repository { get; set; }
+        public static D2Repository Repository { get; set; }
         public static bool isAuthenticated { get; set; }
 
         public static String RestServiceURL { get; set; }
@@ -42,7 +44,7 @@ namespace AspNetWebFormsRestConsumer
 
         }
 
-        public static Repository GetRepository()
+        public static D2Repository GetRepository()
         {
             if (Repository != null) return Repository;
             if(UserName == null || Password == null || Docbase == null || RestServiceURL == null)
@@ -50,13 +52,13 @@ namespace AspNetWebFormsRestConsumer
                 return null;
             }
             RestController client;
-            RestService home;
+            HomeDocument home;
 
             if (RestServiceURL == null) RestServiceURL = "http://10.0.12.32:8080/d2-rest/services";
             client = new RestController(UserName, Password);
-            home = client.Get<RestService>(RestServiceURL, null);
+            home = client.Get<HomeDocument>(RestServiceURL, null);
             home.SetClient(client);
-            Repository = home.GetRepository(Docbase);
+            Repository = home.GetRepository<D2Repository>(Docbase);
             return Repository;
         }
     }

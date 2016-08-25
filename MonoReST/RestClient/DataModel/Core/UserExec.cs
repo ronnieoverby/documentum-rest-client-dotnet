@@ -9,9 +9,7 @@ using System.Threading.Tasks;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    [DataContract(Name = "user", Namespace = "http://identifiers.emc.com/vocab/documentum")] 
-    public partial class User : PersistentObject
+    public partial class User
     {
         /// <summary>
         /// Get the home cabinet (default folder) resource of the user

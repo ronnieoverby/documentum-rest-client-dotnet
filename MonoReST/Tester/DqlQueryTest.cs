@@ -13,7 +13,7 @@ namespace Emc.Documentum.Rest.Test
     {
         public static void Run(RestController client, string RestHomeUri, string query, int itemsPerPage, bool pauseBetweenPages, string repositoryName, bool printResult)
         {
-            RestService home = client.Get<RestService>(RestHomeUri, null);
+            HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
             home.SetClient(client);
             Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
             Repository repository = repositories.FindInlineEntry(repositoryName);
@@ -43,9 +43,9 @@ namespace Emc.Documentum.Rest.Test
                         foreach (string attribute in attributes)
                         {
                             if(first) {
-                                values.Append(attribute).Append("=").Append(obj.getAttributeValue(attribute));
+                                values.Append(attribute).Append("=").Append(obj.GetPropertyValue(attribute));
                             } else {
-                                values.Append(",").Append(attribute).Append("=").Append(obj.getAttributeValue(attribute));
+                                values.Append(",").Append(attribute).Append("=").Append(obj.GetPropertyValue(attribute));
                             }
                         }
                         Console.WriteLine(values.ToString());
@@ -72,7 +72,7 @@ namespace Emc.Documentum.Rest.Test
         {
             foreach (string attr in attrs)
             {
-                var v = po.getAttributeValue(attr);
+                var v = po.GetPropertyValue(attr);
                 if (v != null)
                 {
                     return v.ToString();

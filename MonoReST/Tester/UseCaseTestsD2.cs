@@ -153,7 +153,7 @@ namespace Emc.Documentum.Rest.Test
             long testStart = DateTime.Now.Ticks;
             long tStart = DateTime.Now.Ticks;
 
-            RestService home = client.Get<RestService>(RestHomeUri, null);
+            HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
             if (home == null)
             {
                 WriteOutput("\nUnable to get Rest Service at: " + RestHomeUri + " check to see if the service is available.");
@@ -163,7 +163,7 @@ namespace Emc.Documentum.Rest.Test
             WriteOutput("Took " + ((DateTime.Now.Ticks - testStart) / TimeSpan.TicksPerMillisecond) + "ms to get RestService");
             //Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
             //Repository CurrentRepository = repositories.GetRepository(repositoryName);
-            CurrentRepository = home.GetRepository(repositoryName);
+            CurrentRepository = home.GetRepository<D2Repository>(repositoryName);
             ProductInfo productInfo = home.GetProductInfo();
             if (CurrentRepository == null) throw new Exception("Unable to login to the CurrentRepository, please see server logs for more details.");
             // Set our default folder and document types. 
@@ -178,7 +178,10 @@ namespace Emc.Documentum.Rest.Test
             }
 
             C2ViewDocument(@"C:\SamplesToImport", "09000001800d180f", true);
-            return;
+
+            //todo: return or not
+            // return;
+
             MoveDocs = new List<DocumentTracker>();
             foreach (String key in restTests)
             {
@@ -290,26 +293,26 @@ namespace Emc.Documentum.Rest.Test
                 ProfileConfiguration pc = profileConfigs.getProfileConfiguration(pcl.content.Src);
                 //Console.WriteLine(pc.ToString());
                 D2Document d2doc = new D2Document();
-                d2doc.setAttributeValue("object_name", "D2-ConfigTst-" + DateTime.Now.Ticks);
-                d2doc.setAttributeValue("primary_bus_owner", "Rest");
-                d2doc.setAttributeValue("template_developers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("comm_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("business_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("compliance_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("brand_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("legal_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("ada_reviewers", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("template_admins", new String[] { "dmadmin" });
-                d2doc.setAttributeValue("form_type", "ACT");
-                d2doc.setAttributeValue("form_subtype", "Alternate Loan Notice");
-                d2doc.setAttributeValue("document_subject", "Automatic payment");
-                d2doc.setAttributeValue("requester", "dmadmin");
-                d2doc.setAttributeValue("r_object_type", "wf_form_template");
-                d2doc.setAttributeValue("r_is_virtual_doc", Convert.ToInt32(true));
-                d2doc.setAttributeValue("import_archive", false);
-                d2doc.setAttributeValue("a_status", "Revise");
-                d2doc.setAttributeValue("merge_needed", true);
-                d2doc.setAttributeValue("system_ver_available", true);
+                d2doc.SetPropertyValue("object_name", "D2-ConfigTst-" + DateTime.Now.Ticks);
+                d2doc.SetPropertyValue("primary_bus_owner", "Rest");
+                d2doc.SetPropertyValue("template_developers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("comm_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("business_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("compliance_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("brand_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("legal_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("ada_reviewers", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("template_admins", new String[] { "dmadmin" });
+                d2doc.SetPropertyValue("form_type", "ACT");
+                d2doc.SetPropertyValue("form_subtype", "Alternate Loan Notice");
+                d2doc.SetPropertyValue("document_subject", "Automatic payment");
+                d2doc.SetPropertyValue("requester", "dmadmin");
+                d2doc.SetPropertyValue("r_object_type", "wf_form_template");
+                d2doc.SetPropertyValue("r_is_virtual_doc", Convert.ToInt32(true));
+                d2doc.SetPropertyValue("import_archive", false);
+                d2doc.SetPropertyValue("a_status", "Revise");
+                d2doc.SetPropertyValue("merge_needed", true);
+                d2doc.SetPropertyValue("system_ver_available", true);
                 D2Configuration d2config = new D2Configuration();
                 d2config.LifeCycle = "WF Template Lifecycle";
                 d2config.StartVersion = 0.5d;

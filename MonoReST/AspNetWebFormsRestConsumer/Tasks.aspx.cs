@@ -19,7 +19,7 @@ namespace AspNetWebFormsRestConsumer
             else PopulateTaskGrid(Global.GetRepository());
         }
 
-        protected void PopulateTaskGrid(Repository repository)
+        protected void PopulateTaskGrid(D2Repository repository)
         {
             Feed<D2Task> taskFeed = repository.GetD2TaskList();
             List<D2Task> tasks = ObjectUtil.getFeedAsList(taskFeed);

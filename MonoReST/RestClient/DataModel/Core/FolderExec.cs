@@ -12,12 +12,7 @@ using Emc.Documentum.Rest.DataModel.D2;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-    /// <summary>
-    /// Entry point for Folder 
-    /// </summary>
-    [DataContract(Name = "folder", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class Folder : PersistentObject
+    public partial class Folder
     {
         /// <summary>
         /// Whether the folder can be updated
@@ -25,7 +20,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns Boolean value</returns>
         public new bool CanUpdate()
         {
-            return LinkRelations.FindLinkAsString(this.getFullFolderLinks(), LinkRelations.EDIT.Rel) != null;
+            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.EDIT.Rel) != null;
         }
 
         /// <summary>
@@ -34,7 +29,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns Boolean value</returns>
         public new bool CanDelete()
         {
-            return LinkRelations.FindLinkAsString(this.getFullFolderLinks(), LinkRelations.DELETE.Rel) != null;
+            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.DELETE.Rel) != null;
         }
 
         /// <summary>
@@ -43,7 +38,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns Boolean value</returns>
         public bool HasParent()
         {
-            return LinkRelations.FindLinkAsString(this.getFullFolderLinks(), LinkRelations.PARENT.Rel) != null;
+            return LinkRelations.FindLinkAsString(this.GetFullLinks(), LinkRelations.PARENT.Rel) != null;
         }
 
         /// <summary>
@@ -55,7 +50,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetFolders<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.FOLDERS.Rel,
                 options);
         }
@@ -69,7 +64,7 @@ namespace Emc.Documentum.Rest.DataModel
         public Feed<T> GetDocuments<T>(FeedGetOptions options)
         {
             return Client.GetFeed<T>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
                 options);
         }
@@ -82,7 +77,7 @@ namespace Emc.Documentum.Rest.DataModel
         public new Cabinet GetCabinet(SingleGetOptions options)
         {
             return Client.GetSingleton<Cabinet>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.CABINET.Rel,
                 options);
         }
@@ -95,7 +90,7 @@ namespace Emc.Documentum.Rest.DataModel
         public new Folder GetParentFolder(SingleGetOptions options)
         {
             return Client.GetSingleton<Folder>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.PARENT.Rel,
                 options);
         }
@@ -110,7 +105,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             if (newObj.Client == null) newObj.SetClient(this.Client);
             return Client.Post<Folder>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.FOLDERS.Rel,
                 newObj,
                 options);
@@ -122,12 +117,12 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="newObj"></param>
         /// <param name="options"></param>
         /// <returns>Returns RestDocument object</returns>
-        public RestDocument CreateSubDocument(RestDocument newObj, GenericOptions options)
+        public Document CreateSubDocument(Document newObj, GenericOptions options)
         {
             if (newObj.Client == null) newObj.SetClient(this.Client);
 
-            return Client.Post<RestDocument>(
-                this.getFullFolderLinks(),
+            return Client.Post<Document>(
+                this.GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
                 newObj,
                 options);
@@ -143,7 +138,7 @@ namespace Emc.Documentum.Rest.DataModel
         public T CreateSubObject<T>(T newObj, GenericOptions options) where T : PersistentObject
         {
             return Client.Post<T>(
-                this.getFullFolderLinks(),
+                this.GetFullLinks(),
                 LinkRelations.OBJECTS.Rel,
                 newObj,
                 options);
@@ -157,11 +152,11 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="otherPartMime"></param>
         /// <param name="options"></param>
         /// <returns>Returns RestDocument object</returns>
-        public RestDocument ImportDocumentWithContent(RestDocument newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)
+        public Document ImportDocumentWithContent(Document newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)
         {
             Dictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
             otherParts.Add(otherPartStream, otherPartMime);
-            return Client.Post<RestDocument>(
+            return Client.Post<Document>(
                 this.Links,
                 LinkRelations.DOCUMENTS.Rel,
                 newObj,
@@ -178,12 +173,12 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="otherPartMime"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        public EmailPackage ImportEmail(RestDocument newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)
+        public EmailPackage ImportEmail(Document newObj, Stream otherPartStream, string otherPartMime, GenericOptions options)
         {
             Dictionary<Stream, string> otherParts = new Dictionary<Stream, string>();
             otherParts.Add(otherPartStream, otherPartMime);
-            options.SetQuery("folderId", this.getAttributeValue("r_object_id"));
-            Feed<RestDocument> feed = Client.Post<RestDocument, Feed<RestDocument>>(
+            options.SetQuery("folderId", this.GetPropertyValue("r_object_id"));
+            Feed<Document> feed = Client.Post<Document, Feed<Document>>(
                 Client.RepositoryBaseUri + LinkRelations.EMAILIMPORT,
                 newObj,
                 otherParts,
@@ -198,30 +193,13 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="newObj"></param>
         /// <param name="options"></param>
         /// <returns>Returns Folder link </returns>
-        public FolderLink LinkFrom(RestDocument newObj, GenericOptions options)
+        public FolderLink LinkFrom(Document newObj, GenericOptions options)
         {
-            return Client.Post<RestDocument, FolderLink>(
-                this.getFullFolderLinks(),
+            return Client.Post<Document, FolderLink>(
+                this.GetFullLinks(),
                 LinkRelations.CHILD_LINKS.Rel,
                 newObj,
                 options);
-        }
-
-        /// <summary>
-        /// If a folder is a raw object, this method can be called to fetch the folder with its links
-        /// </summary>
-        /// <returns>Returns List</returns>
-        private List<Link> getFullFolderLinks()
-        {
-            if (this.Links.Count == 1 && this.Links[0].Title.Equals("self"))
-            {
-                Repository repo = new Repository();
-                repo.SetClient(Client);
-                Folder fullFolder = repo.getObjectById<Folder>(this.getAttributeValue("r_object_id").ToString()); //getFolderByQualification("dm_folder where r_object_id = '"
-                    //+ this.getAttributeValue("r_object_id") + "'", new FeedGetOptions() { Inline = true, Links = true });
-                return fullFolder.Links;
-            }
-            else return this.Links;
         }
     }
 }

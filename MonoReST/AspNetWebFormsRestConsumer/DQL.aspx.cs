@@ -23,21 +23,21 @@ namespace AspNetWebFormsRestConsumer
         private void UpdateGrid(String qualifier)
         {
             Repository repository = Global.GetRepository();
-            Feed<RestDocument> feed = repository.ExecuteDQL<RestDocument>("select * from " + qualifier,
+            Feed<Document> feed = repository.ExecuteDQL<Document>("select * from " + qualifier,
                 new FeedGetOptions() { Inline = true, Links = true });
-            List<RestDocument> docs = feed == null? null : ObjectUtil.getFeedAsList<RestDocument>(feed);
+            List<Document> docs = feed == null? null : ObjectUtil.getFeedAsList<Document>(feed);
 
             List<SimpleDocumentProperties> lst = new List<SimpleDocumentProperties>();
-            foreach (RestDocument doc in docs)
+            foreach (Document doc in docs)
             {
                 SimpleDocumentProperties sdp = new SimpleDocumentProperties();
-                sdp.Id = doc.getAttributeValue("r_object_id").ToString();
-                sdp.Name = doc.getAttributeValue("object_name").ToString();
-                sdp.Subject = doc.getAttributeValue("subject").ToString();
-                sdp.Title = doc.getAttributeValue("title").ToString();
-                String folderId = doc.getRepeatingString("i_folder_id", 0);
+                sdp.Id = doc.GetPropertyValue("r_object_id").ToString();
+                sdp.Name = doc.GetPropertyValue("object_name").ToString();
+                sdp.Subject = doc.GetPropertyValue("subject").ToString();
+                sdp.Title = doc.GetPropertyValue("title").ToString();
+                String folderId = doc.GetRepeatingString("i_folder_id", 0);
                 Folder folder = repository.getObjectById<Folder>(folderId);
-                String folderPath = folder.getRepeatingString("r_folder_path", 0);
+                String folderPath = folder.GetRepeatingString("r_folder_path", 0);
                 sdp.FolderPath = folderPath;
                 lst.Add(sdp);
             }

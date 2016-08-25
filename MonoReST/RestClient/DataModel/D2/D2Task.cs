@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "Task", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public class D2Task : Linkable, Executable
+    public class D2Task : ExecLinkable
     {
         [DataMember(Name = "task_id")]
         public String TaskID { get; set; }
@@ -92,24 +92,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
         [DataMember(Name = "process_name")]
         public String ProcessName { get; set; }
-
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        /// <summary>
-        /// Rest controler client 
-        /// </summary>
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-
     }
 
     [DataContract(Name = "task_context_menu_labels")]

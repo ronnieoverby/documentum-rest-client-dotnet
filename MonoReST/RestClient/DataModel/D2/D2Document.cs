@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Emc.Documentum.Rest.DataModel.D2
 {
-    public class D2Document : RestDocument, Executable
+    public class D2Document : Document
     {
         /// <summary>
         /// This is used to set the D2 options when creating the D2 document during creation. This may be 

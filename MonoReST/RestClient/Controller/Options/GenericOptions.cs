@@ -6,21 +6,25 @@ using System.Text;
 namespace Emc.Documentum.Rest.Net
 {
     /// <summary>
-    /// key value pairs of URI query parameters
+    /// Key value pairs of URI query parameters
     /// </summary>
     public class GenericOptions
     {
-        public Dictionary<string, object> pa = new Dictionary<string, object>();
+        protected Dictionary<string, object> pa = new Dictionary<string, object>();
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public GenericOptions()
         {
 
         }
+
         /// <summary>
-        /// 
+        /// Sets query parameter like links=true
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
+        /// <param name="name">Parameter name</param>
+        /// <param name="value">Parameter value</param>
         public void SetQuery(String name, object value)
         {
             if(!pa.ContainsKey(name))
@@ -34,9 +38,19 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Check whether the specified parameter is included
         /// </summary>
+        /// <param name="name"></param>
         /// <returns></returns>
+        public bool ContainsParam(string name)
+        {
+            return pa.ContainsKey(name);
+        }
+
+        /// <summary>
+        /// Returns the query parameters as a list of pairs
+        /// </summary>
+        /// <returns>The list of query parameters</returns>
         public List<KeyValuePair<string,object>> ToQueryList()
         {
             List<KeyValuePair<string, object>> kvp = new List<KeyValuePair<string, object>>();   

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.DataModel
 {
     /// <summary>
-    /// Entry is used in the assembly Feeds. It is a container for any serializable object
+    /// Entry is used in the Feed. It is a container for any serializable object.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [DataContract(Name = "entry", Namespace = "http://www.w3.org/2005/Atom")]
@@ -38,13 +38,10 @@ namespace Emc.Documentum.Rest.DataModel
         [DataMember(Name = "summary")]
         public string Summary { get; set; }
 
-        /// <summary>
-        /// Authors of the feed entry
-        /// </summary>
         private List<Author> _authors = new List<Author>();
 
         /// <summary>
-        /// 
+        /// Authors of the feed entry
         /// </summary>
         [DataMember(Name = "author")]
         public List<Author> Authors 
@@ -69,7 +66,19 @@ namespace Emc.Documentum.Rest.DataModel
         public T Content { get; set; }
 
         /// <summary>
-        /// 
+        /// The search score
+        /// </summary>
+        [DataMember(Name = "score")]
+        public float Score { get; set; }
+
+        /// <summary>
+        /// The terms that match, can be used to highlight in the summary
+        /// </summary>
+        [DataMember(Name = "terms")]
+        public string[] Terms { get; set; }
+
+        /// <summary>
+        /// To string
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -100,9 +109,10 @@ namespace Emc.Documentum.Rest.DataModel
     }
 
     /// <summary>
-    /// Used to broker the object to an atom feed content object
+    /// Used to broker the object to an atom feed content object with src link (not inline object)
     /// </summary>
-    [DataContract(Name = "content", Namespace = "http://www.w3.org/2005/Atom")]  
+    [DataContract(Name = "content", Namespace = "http://www.w3.org/2005/Atom")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
     public class OutlineAtomContent 
     {
         /// <summary>
@@ -130,9 +140,4 @@ namespace Emc.Documentum.Rest.DataModel
             return builder.ToString();
         }
     }
-
-    //public interface IContent
-    //{
-
-    //}
 }

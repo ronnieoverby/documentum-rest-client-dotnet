@@ -14,7 +14,7 @@ namespace Emc.Documentum.Rest.DataModel
     public interface Executable
     {
         /// <summary>
-        /// 
+        /// Sets the client
         /// </summary>
         /// <param name="client"></param>
         void SetClient(RestController client);

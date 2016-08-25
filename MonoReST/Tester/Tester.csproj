@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -12,6 +12,7 @@
     <ApplicationIcon>PerfCenterCpl.ico</ApplicationIcon>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Description>A console appliation that runs through use cases, can perform some level of loading for a repository as well. The source code provides good examples of working with the .NET DCTM-ReST framework.</Description>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -77,7 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RestClient\RestClient.csproj">
-      <Project>{FC3F7008-D477-49ED-BEA8-B775541127E5}</Project>
+      <Project>{fc3f7008-d477-49ed-bea8-b775541127e5}</Project>
       <Name>RestClient</Name>
     </ProjectReference>
   </ItemGroup>

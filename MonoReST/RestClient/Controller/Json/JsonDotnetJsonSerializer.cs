@@ -17,6 +17,7 @@ namespace Emc.Documentum.Rest.Net
     {
         private JsonSerializer SERIALIZER;
         private Formatting _formatting = Formatting.Indented;
+
         /// <summary>
         /// Set/Get the formatting for the serializer. Options are:
         /// Formatting.None, Formatting.Indented
@@ -30,7 +31,7 @@ namespace Emc.Documentum.Rest.Net
         public bool PrintStreamBeforeDeserialize { get; set; }
 
         /// <summary>
-        /// 
+        /// JsonDotnetJsonSerializer with default setting
         /// </summary>
         public JsonDotnetJsonSerializer()
         {
@@ -43,19 +44,17 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Read resource data object from JSON message stream
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="input"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="input">JSON input stream</param>
+        /// <returns>Resource data model object</returns>
         public override T ReadObject<T>(Stream input)
         {
             if (PrintStreamBeforeDeserialize)
             {
                 StreamReader sr = new StreamReader(input);
                 string text = sr.ReadToEnd();
-                Console.WriteLine("JSON Text of input object: \n--------------------------------------------------\n"
-                    + text + "\n\n--------------------------------------------------");
                 input.Position = 0;
             }
             JsonReader reader = new JsonTextReader(new StreamReader(input));
@@ -64,11 +63,11 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Write resource data object to JSON message stream
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="output"></param>
-        /// <param name="obj"></param>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="output">JSON output stream</param>
+        /// <param name="obj">Resource data model object</param>
         public override void WriteObject<T>(Stream output, T obj)
         {          
             JsonWriter writer = new JsonTextWriter(new StreamWriter(output));
@@ -79,11 +78,11 @@ namespace Emc.Documentum.Rest.Net
         }
 
         /// <summary>
-        /// 
+        /// Serialize resource data object to JSON string
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="obj"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Resource data model type</typeparam>
+        /// <param name="obj">Resource data model object</param>
+        /// <returns>String JSON message</returns>
         public String Serialize<T>(T obj)
         {
             String json = "";

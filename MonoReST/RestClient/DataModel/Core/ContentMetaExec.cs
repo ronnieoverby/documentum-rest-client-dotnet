@@ -13,22 +13,16 @@ using System.Runtime.InteropServices;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-
-    /// <summary>
-    /// 
-    /// </summary>
-    [DataContract(Name = "content", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class ContentMeta : PersistentObject
+    public partial class ContentMeta
     {
         /// <summary>
         /// Get the associated document resource of this content
         /// </summary>
         /// <param name="options"></param>
         /// <returns>Returns a RestDocument object </returns>
-        public RestDocument GetParentDocument(SingleGetOptions options)
+        public Document GetParentDocument(SingleGetOptions options)
         {
-            return Client.GetSingleton<RestDocument>(this.Links, LinkRelations.PARENT.Rel, options);
+            return Client.GetSingleton<Document>(this.Links, LinkRelations.PARENT.Rel, options);
         }
 
         /// <summary>
@@ -39,8 +33,8 @@ namespace Emc.Documentum.Rest.DataModel
         {
             
             string contentMediaUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.CONTENT_MEDIA.Rel);
-            string fileName = (string)getAttributeValue("object_name"); 
-            string dosExtension = (string)getAttributeValue("dos_extension");
+            string fileName = (string)GetPropertyValue("object_name"); 
+            string dosExtension = (string)GetPropertyValue("dos_extension");
             if (String.IsNullOrEmpty(fileName))
             {
                 fileName = "namelessobj-" + System.Guid.NewGuid().ToString();
@@ -57,7 +51,7 @@ namespace Emc.Documentum.Rest.DataModel
                 if(dosExtension != null && !dosExtension.Trim().Equals("")) {
                     fileExtension = dosExtension;
                 } else {
-                    fileExtension = ObjectUtil.getDosExtensionFromFormat(getAttributeValue("full_format").ToString());
+                    fileExtension = ObjectUtil.getDosExtensionFromFormat(GetPropertyValue("full_format").ToString());
                 }
             }
 
@@ -80,13 +74,21 @@ namespace Emc.Documentum.Rest.DataModel
             return new FileInfo(fullPath);
         }
 
+        /// <summary>
+        /// Download the content media as stream
+        /// </summary>
+        /// <returns></returns>
         public Stream DownloadContentMediaStream()
         {
             string contentMediaUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.CONTENT_MEDIA.Rel);
             return Client.GetRaw(contentMediaUri);
         }
 
-        public String getMediaUri()
+        /// <summary>
+        /// Get the content media URL
+        /// </summary>
+        /// <returns></returns>
+        public String GetMediaUri()
         {
             return LinkRelations.FindLinkAsString(this.Links, LinkRelations.CONTENT_MEDIA.Rel);
         }

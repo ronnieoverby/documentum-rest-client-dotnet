@@ -12,7 +12,7 @@ namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "search-configuration", Namespace = "http://www.w3.org/2005/Atom")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class SearchConfiguration : Linkable, Executable
+    public class SearchConfiguration : ExecLinkable
     {
         [DataMember(Name = "object_name")]
         public String Name { get; set; }
@@ -25,23 +25,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
 
         [DataMember(Name = "search_properties")]
         public List<SearchProperty> SearchProperties;
-
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
-        }
-
-        public override string ToString()
-        {
-            JsonDotnetJsonSerializer serializer = new JsonDotnetJsonSerializer();
-            return serializer.Serialize(this);
-        }
     }
 
     [DataContract(Name = "item", Namespace = "http://www.w3.org/2005/Atom")]

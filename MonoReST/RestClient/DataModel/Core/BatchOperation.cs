@@ -9,11 +9,15 @@ using System.Runtime.Serialization.Json;
 using System.Net.Http.Headers;
 using Emc.Documentum.Rest.Http.Utility;
 using System.Runtime.Serialization;
+using System.Runtime.InteropServices;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    [DataContract(Name = "batch", Namespace = "http://identifiers.emc.com/vocab/documentum")] 
+    /// <summary>
+    /// Batch resource model
+    /// </summary>
+    [DataContract(Name = "batch", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    [ClassInterface(ClassInterfaceType.AutoDual)]
     public class Batch
     {
         public Batch()
@@ -63,6 +67,9 @@ namespace Emc.Documentum.Rest.DataModel
 
     }
 
+    /// <summary>
+    /// Batch operation model
+    /// </summary>
     [DataContract(Name = "operation", Namespace = "http://identifiers.emc.com/vocab/documentum")]
     public partial class Operation
     {
@@ -96,6 +103,9 @@ namespace Emc.Documentum.Rest.DataModel
         }
     }
 
+    /// <summary>
+    /// Batch request and response header model
+    /// </summary>
     public partial class Header 
     {
         [DataMember(Name = "name")]

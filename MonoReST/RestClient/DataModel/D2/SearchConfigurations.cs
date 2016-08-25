@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Emc.Documentum.Rest.DataModel.D2
 {
     [DataContract(Name = "search-configuration", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public class SearchConfigurations : Linkable, Executable
+    public class SearchConfigurations : ExecLinkable
     {
         [DataMember(Name = "id")]
         public String id { get; set; }
@@ -68,17 +68,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
             {
                 _entries = value;
             }
-        }
-        private RestController _client;
-        public void SetClient(RestController client)
-        {
-            _client = client;
-        }
-
-        public RestController Client
-        {
-            get { return _client; }
-            set { this._client = value; }
         }
     }
 

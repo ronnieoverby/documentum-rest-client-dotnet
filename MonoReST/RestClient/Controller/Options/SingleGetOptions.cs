@@ -12,14 +12,21 @@ namespace Emc.Documentum.Rest.Net
     /// </summary>
     public class SingleGetOptions : GenericOptions
     {
+        /// <summary>
+        /// Query parameter 'view'
+        /// </summary>
         public static readonly string PARAM_VIEW = "view";
-        public static readonly string PARAM_INLINE = "inline";
+        /// <summary>
+        /// Query parameter 'links'
+        /// </summary>
         public static readonly string PARAM_LINKS = "links";
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public SingleGetOptions() : base()
         {
             // Set any default values here.
-            Inline = true;
             Links = true;
         }
         /// <summary>
@@ -27,7 +34,7 @@ namespace Emc.Documentum.Rest.Net
         /// works only when inline is set to true so if set to true
         /// this method will also set inline to true;
         /// </summary>
-        public String View
+        public virtual String View
         {
             get {
                 return pa[PARAM_VIEW].ToString();
@@ -37,7 +44,6 @@ namespace Emc.Documentum.Rest.Net
                 // If a view is specified, inline must be true
                 if(!String.IsNullOrEmpty(View))
                 {
-                    Inline = true;
                     if (pa.ContainsKey(PARAM_VIEW))
                     {
                         pa[PARAM_VIEW] = value;
@@ -57,7 +63,7 @@ namespace Emc.Documentum.Rest.Net
         /// false - do not return link relations
         /// Default: true
         /// </summary>
-        public Boolean Links
+        public virtual Boolean Links
         {
             get
             {
@@ -69,23 +75,6 @@ namespace Emc.Documentum.Rest.Net
                     pa[PARAM_LINKS] = value;
                 }
                 else pa.Add(PARAM_LINKS, value);
-                if (value) Inline = true;
-            }
-        }
-
-        public Boolean Inline
-        {
-            get
-            {
-                return (Boolean)pa[PARAM_INLINE];
-            }
-            set
-            {
-                if (!pa.ContainsKey(PARAM_INLINE))
-                {
-                    pa.Add(PARAM_INLINE, value);
-                }
-                else { pa[PARAM_INLINE] = value; }
             }
         }
     }
