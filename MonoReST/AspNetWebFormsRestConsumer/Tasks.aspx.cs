@@ -8,6 +8,7 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Drawing;
 
 namespace AspNetWebFormsRestConsumer
 {
@@ -21,6 +22,15 @@ namespace AspNetWebFormsRestConsumer
 
         protected void PopulateTaskGrid(D2Repository repository)
         {
+            if (!repository.isD2Rest())
+            {
+                NoteLabel.ForeColor = Color.OrangeRed;
+                NoteLabel.Text = String.Format("The target repository '{0}' is NOT a D2 repository.", repository.Name);
+                return;
+            }
+
+            NoteLabel.ForeColor = Color.LightGreen;
+            NoteLabel.Text = String.Format("The target repository '{0}' is a D2 repository.", repository.Name);
             Feed<D2Task> taskFeed = repository.GetD2TaskList();
             List<D2Task> tasks = ObjectUtil.getFeedAsList(taskFeed);
             StringBuilder taskStatus = new StringBuilder();
@@ -53,7 +63,5 @@ namespace AspNetWebFormsRestConsumer
         public String Subject { get; set; }
         public String Instructions { get; set; }
         public String forwardTasks { get; set; }
-
-
     }
 }

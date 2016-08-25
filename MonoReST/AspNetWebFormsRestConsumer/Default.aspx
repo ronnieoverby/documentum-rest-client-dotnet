@@ -4,9 +4,9 @@
     </asp:Content>
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <br />
-   <h1>Welcome to Rest Using Asp.Net</h1>
-    <h4>This is not meant to be a complex sample. It uses basic controls and uploads to show how you can integrate with DCTM Rest Services<br />
-        at even the most basic level. There are toolkits that make working with Rest services very easy and you can build more complex UIs<br />
+   <h1>Welcome to REST .NET Sample Using Asp.Net</h1>
+    <h4 class="auto-style3">This is not meant to be a complex sample. It uses basic controls and uploads to show how you can integrate with Documentum REST Services
+        at even the most basic level. There are toolkits that make working with Rest services very easy and you can build more complex UIs
         with them.</h4>
     <p>
         &nbsp;</p>
@@ -19,7 +19,7 @@
                     </p>
     <p>
         UserName:&nbsp;
-        <asp:TextBox ID="txtUserName" runat="server"></asp:TextBox>
+        <asp:TextBox ID="txtUserName" runat="server">dmadmin</asp:TextBox>
 
         </p>
     <p>
@@ -28,12 +28,12 @@
 
         </p>
     <p>
-        Docbase:<asp:TextBox ID="txtDocbase" runat="server">repo1</asp:TextBox>
+        Docbase:<asp:TextBox ID="txtDocbase" runat="server">REPO</asp:TextBox>
 
         </p>
     <p>
         RestURL:
-        <asp:TextBox ID="txtRestUrl" runat="server" Width="356px">http://10.0.12.32:8080/d2-rest/services</asp:TextBox>
+        <asp:TextBox ID="txtRestUrl" runat="server" Width="356px">http://localhost:8080/dctm-rest/services</asp:TextBox>
 
         </p>
     <p>
@@ -53,12 +53,13 @@
 </asp:Content>
 <asp:Content ID="Content1" runat="server" contentplaceholderid="HeadContent">
     <style type="text/css">
-        .auto-style1 {
-            font-size: x-large;
-        }
         .auto-style2 {
             width: 559px;
         }
+        .auto-style3 {
+        font-weight: normal;
+        color: #0066FF;
+    }
         </style>
 </asp:Content>
 

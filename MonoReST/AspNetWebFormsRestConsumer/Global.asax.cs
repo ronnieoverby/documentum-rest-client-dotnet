@@ -54,7 +54,7 @@ namespace AspNetWebFormsRestConsumer
             RestController client;
             HomeDocument home;
 
-            if (RestServiceURL == null) RestServiceURL = "http://10.0.12.32:8080/d2-rest/services";
+            if (RestServiceURL == null) RestServiceURL = "http://localhost:8080/dctm-rest/services";
             client = new RestController(UserName, Password);
             home = client.Get<HomeDocument>(RestServiceURL, null);
             home.SetClient(client);

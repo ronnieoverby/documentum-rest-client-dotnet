@@ -8,6 +8,7 @@ using Emc.Documentum.Rest.DataModel;
 using Emc.Documentum.Rest.Http.Utility;
 using Emc.Documentum.Rest.Net;
 using System.IO;
+using System.Drawing;
 using Emc.Documentum.Rest.DataModel.D2;
 
 namespace AspNetWebFormsRestConsumer
@@ -19,6 +20,17 @@ namespace AspNetWebFormsRestConsumer
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Global.GetRepository() == null) Response.Redirect("Default.aspx");
+            D2Repository repository = Global.GetRepository();
+            if (!repository.isD2Rest())
+            {
+                NoteLabel2.ForeColor = Color.OrangeRed;
+                NoteLabel2.Text = String.Format("The target repository '{0}' is NOT a D2 repository.", repository.Name);
+                btnCreate.Enabled = false;
+                return;
+            }
+
+            NoteLabel2.ForeColor = Color.LightGreen;
+            NoteLabel2.Text = String.Format("The target repository '{0}' is a D2 repository.", repository.Name);     
         }
 
 

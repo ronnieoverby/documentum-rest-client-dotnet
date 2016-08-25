@@ -33,6 +33,7 @@ namespace AspNetWebFormsRestConsumer
                 lblUserInfo.ForeColor = System.Drawing.Color.Green;
                 lblUserInfo.Text = "User " + currentUser.GetPropertyValue("user_name").ToString() + " successfully logged in!";
                 lblLoginBanner.CssClass = "message-success";
+                Response.Redirect("DQL.aspx");
             } else
             {
                 lblUserInfo.Visible = true;

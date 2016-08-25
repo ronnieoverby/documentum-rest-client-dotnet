@@ -12,7 +12,6 @@ namespace AspNetWebFormsRestConsumer
 {
     public partial class DQL : Page
     {
-
         protected void Page_Load(object sender, EventArgs e)
         {
 
@@ -23,19 +22,18 @@ namespace AspNetWebFormsRestConsumer
         private void UpdateGrid(String qualifier)
         {
             Repository repository = Global.GetRepository();
-            Feed<Document> feed = repository.ExecuteDQL<Document>("select * from " + qualifier,
+            Feed<PersistentObject> feed = repository.ExecuteDQL<PersistentObject>("select r_object_id,object_name,subject,title,i_folder_id from " + qualifier,
                 new FeedGetOptions() { Inline = true, Links = true });
-            List<Document> docs = feed == null? null : ObjectUtil.getFeedAsList<Document>(feed);
-
+            List<PersistentObject> items = feed == null ? new List<PersistentObject>() : ObjectUtil.getFeedAsList<PersistentObject>(feed);
             List<SimpleDocumentProperties> lst = new List<SimpleDocumentProperties>();
-            foreach (Document doc in docs)
+            foreach (PersistentObject item in items)
             {
                 SimpleDocumentProperties sdp = new SimpleDocumentProperties();
-                sdp.Id = doc.GetPropertyValue("r_object_id").ToString();
-                sdp.Name = doc.GetPropertyValue("object_name").ToString();
-                sdp.Subject = doc.GetPropertyValue("subject").ToString();
-                sdp.Title = doc.GetPropertyValue("title").ToString();
-                String folderId = doc.GetRepeatingString("i_folder_id", 0);
+                sdp.Id = item.GetPropertyString("r_object_id");
+                sdp.Name = item.GetPropertyString("object_name");
+                sdp.Subject = item.GetPropertyString("subject");
+                sdp.Title = item.GetPropertyString("title");
+                String folderId = item.GetRepeatingString("i_folder_id", 0);
                 Folder folder = repository.GetSysObjectById<Folder>(folderId);
                 String folderPath = folder.GetRepeatingString("r_folder_path", 0);
                 sdp.FolderPath = folderPath;
@@ -44,8 +42,6 @@ namespace AspNetWebFormsRestConsumer
             gridView.DataSource = lst;
             gridView.DataBind();
         }
-
-
 
         protected void gridView_RowEditing(object sender, GridViewEditEventArgs e)
         {

@@ -3,7 +3,7 @@
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">
         <h1><%: Title %>Qualifier Query<br />
-            Provide only the type and criteria (Eg. dm_document where folder(&#39;/Temp&#39;)<br />
+            <span class="auto-style1">Provide only the type and criteria, where the type should be dm_sysobject or sub types (e.g. dm_document where folder(&#39;/Temp&#39;)</span><br />
         </h1>
     </hgroup>
 
@@ -24,3 +24,12 @@
 
     </article>
     </asp:Content>
+<asp:Content ID="Content1" runat="server" contentplaceholderid="HeadContent">
+    <style type="text/css">
+    .auto-style1 {
+        font-size: medium;
+        font-weight: normal;
+        color: #0066FF;
+    }
+</style>
+</asp:Content>

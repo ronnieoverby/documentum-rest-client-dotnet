@@ -2,7 +2,12 @@
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">
-        <h1><%: Title %>Tasks<br />
+        <h1><%: Title %>D2 Tasks<br />
+            <span class="auto-style1">This demo works on D2 repository only</span><br />
+            <p class="auto-style2">
+                Note:
+                <asp:Label ID="NoteLabel" runat="server"></asp:Label>
+            </p>
         </h1>
     </hgroup>
 
@@ -20,4 +25,18 @@
         </asp:GridView>
     </article>
     </asp:Content>
+  <asp:Content ID="Content1" runat="server" contentplaceholderid="HeadContent">
+      <style type="text/css">
+    .auto-style1 {
+        font-size: medium;
+        font-weight: normal;
+        color: #0066FF;
+    }
+    .auto-style2 {
+        font-weight: normal;
+        font-size: medium;
+    }
+</style>
+</asp:Content>
+
   
