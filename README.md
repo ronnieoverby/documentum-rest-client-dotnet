@@ -22,6 +22,7 @@ This project implements a REST client as a DLL library. It implements the REST A
 
 Here is the code to start a Documentum REST services from **Home Document**.
 ```C#
+RestController client = new RestController(username, password);
 HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
 Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
 ```
@@ -39,7 +40,7 @@ public Document ImportDocumentAsNewVersion(Document doc, Stream contentStream, S
     checkinOptions.SetQuery("format", doc.GetPropertyString("a_content_type"));
     checkinOptions.SetQuery("page", 0);
     checkinOptions.SetQuery("primary", true);
-    return doc.CheckinMinor(doc, contentStream, mimeType, checkinOptions);
+    return doc.CheckinMinor(checkinDoc, contentStream, mimeType, checkinOptions);
 }
 ```
 
