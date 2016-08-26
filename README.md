@@ -9,54 +9,91 @@ EMC shares the source code of this project for the technology sharing. If users 
 
 The solution contains four projects.
 
-- RestClient
-- Tester
-- DroidMamarinTest
-- AspNetWebFormsRestConsumer
+- **RestClient**
+- **Tester**
+- **AspNetWebFormsRestConsumer**
+- **DroidMamarinTest**
 
 The client samples have been verified against Documentum REST Services 7.2. For more information, please visit [Documentum REST space in EMC Community Network](https://community.emc.com/docs/DOC-32266).
 
 ### RestClient
 
-The main project to implement a REST client that can be used for model and controller. It implements the client side resource invocation of folder/document CRUD, folder navigation, document versioning, content upload/download, copy, move, link, unlink, DQL query, etc. However, it does not cover the full list of Documentum REST resources. It implements the JSON media type. It implements HTTP Basic authentication and optionally supports Kerberos.
+This project implements a REST client as a DLL library. It implements the REST API functions of folder/document CRUD, folder navigation, document versioning, content upload/download, copy, move, link, unlink, DQL query, etc. However, it does not cover the full list of Documentum REST resources yet. It implements the JSON media type. It implements HTTP Basic authentication and optionally supports Kerberos.
 
-### DroidXamarinTest 
+Here is the code to start a Documentum REST services from **Home Document**.
+```C#
+HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
+Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
+```
 
-This project uses [Xamarin](http://xamarin.com/) to show how the DocumentumRestClient dll can be used on mobile platforms. To use this project, you must use `Xamarin Studio` or	have `Xamarin for Visual Studio` installed. It is definitely nothing fancy, just a basic concept of list cabinets, navigate folders, nothing more.
+When you get a response from a resource, you get a `state` of that resource on the client side as well. Then you can perform further operations on that resource according to its available methods. For instance,
+```C#
+public Document ImportDocumentAsNewVersion(Document doc, Stream contentStream, String mimeType, GenericOptions checkinOptions)
+{
+    // If the document is not already checked out, check it out.
+    if (!doc.IsCheckedOut())
+    {
+        doc = doc.Checkout();
+    }
+    Document checkinDoc = NewDocument(doc.GetPropertyString("object_name"));
+    checkinOptions.SetQuery("format", doc.GetPropertyString("a_content_type"));
+    checkinOptions.SetQuery("page", 0);
+    checkinOptions.SetQuery("primary", true);
+    return doc.CheckinMinor(doc, contentStream, mimeType, checkinOptions);
+}
+```
+
 
 ### Tester 
 
 This project is a console application to show how end to end functions work (the source code here is a great example of how to handle use cases). It has been tested on Windows and Linux and should work on Mac as well.
 
+<img src="Demo/dotnet-demo1.gif" width="800">
+
+
 ### AspNetWebFormsRestConsumer
 
-An asp.net web forms sample to consume the REST services.
-	
-#### QuickStart
+This project is an asp.net web forms sample to consume the REST services. 
+
+<img src="Demo/dotnet-demo2.gif" width="800">
+
+
+### DroidXamarinTest 
+
+This project uses [Xamarin](http://xamarin.com/) to show how the DocumentumRestClient dll can be used on mobile platforms. To use this project, you must use `Xamarin Studio` or have `Xamarin for Visual Studio` installed. It is definitely nothing fancy, just a basic concept of list cabinets, navigate folders, nothing more.
+
+
+### QuickStart
 
 __Step 1__
+
 Open the `App.Config` file and find below XML section:
-
+```xml
     <section name="restconfig" type="System.Configuration.NameValueSectionHandler,System"/>
-
-If you are using Visual Studio, it should read this:
-
+```
+If you are using `Visual Studio`, it should read this:
+```xml
     <section name="restconfig" type="System.Configuration.NameValueSectionHandler"/>
+```
 
 Basically, one has a type with a `,System` in it and the other doesn't. It is a workaround for  [Mono](http://www.mono-project.com/) for now until they fix it, but having this `,System` in the config for Visual Studio causes an exception when loading the configuration file.
 		
-__Step 2__	
-Go to the `<restConfig>` section and become familiar with the descriptions and what the parameters do. To get started, all you need do here is set the `randomfilesdirectory` value to a (Windows) `[driveletter]:\Path\To\Files directory or (Unix) /Path/To/Files`
+__Step 2__
+
+Go to the `<restConfig>` section and become familiar with the descriptions and what the parameters do. To get started, all you need do here is set the `importFilesDirectory` value to a (Windows) `[driveletter]:\Path\To\Files directory or (Unix) /Path/To/Files`
 
 The path you choose should have a number of files directly under this directory. The Tester will choose a number of files from here at random as samples to upload.
 
 __Step 3__
-You can set the `randomemailsdirectory` to the same value as `randomfilesdirectory`, this is not currently used with base Rest services, it is only available with extensions enabled. If you need an extension for Rest that imports emails and splits out the attachment files, have your account rep contact michael.mccollough@emc.com.
+
+You can set the `importEmailsDirectory` to the same value as `importFilesDirectory`, this is not currently used with base Rest services, it is only available with extensions enabled. If you need an extension for Rest that imports emails and splits out the attachment files, have your account rep contact michael.mccollough@emc.com.
 
 __Step 4__
-You can update the `defaultReSTHomeUri`, `defaultUsername`, `defaultRepositoryName`, 	`defaultPassword` values to the values for your environment.
+
+You can update the `defaultReSTHomeUri`, `defaultUsername`, `defaultRepositoryName`, `defaultPassword` values to the values for your environment. 
 
 __Step 5__ 
+
 If you set the `useDefault` parameter to true, it will not prompt you initially to enter the above information. If you set it to false, when you initially launch the Tester it will prompt you but allow you to hit enter to accept the default values you set in this configuration file.
 
 > __Kerberos__
