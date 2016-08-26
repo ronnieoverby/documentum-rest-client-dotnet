@@ -154,7 +154,6 @@ namespace Emc.Documentum.Rest.DataModel
         {
             T hrefObj = (T)Activator.CreateInstance(typeof(T));
             hrefObj.Href = SelfLink();
-            hrefObj.SetClient(this.Client);
             return hrefObj;
         }
 
@@ -183,21 +182,6 @@ namespace Emc.Documentum.Rest.DataModel
                 self = LinkRelations.FindLinkAsString(this.Links, LinkRelations.SELF.Rel);
             }
             return self;
-        }
-
-        /// <summary>
-        /// If a persistent object is a raw object, this method can be called to fetch the folder with its links
-        /// </summary>
-        /// <returns>Returns List</returns>
-        protected List<Link> GetFullLinks()
-        {
-            if (this.Links.Count == 1 && this.Links[0].Title.Equals(LinkRelations.SELF.Rel))
-            {
-                SingleGetOptions options = new SingleGetOptions { Links = true };
-                PersistentObject refreshed = Client.GetSingleton<PersistentObject>(this.Links, LinkRelations.SELF.Rel, options);
-                this.Links = refreshed.Links;
-            }
-            return this.Links;
         }
     }
 }

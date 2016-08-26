@@ -74,6 +74,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataModel\Base\ExecLinkable.cs" />
+    <Compile Include="DataModel\Core\DmType.cs" />
+    <Compile Include="DataModel\Core\BatchCapabilities.cs" />
+    <Compile Include="DataModel\Core\NetworkLocation.cs" />
+    <Compile Include="DataModel\Core\RelationExec.cs" />
+    <Compile Include="DataModel\Core\RelationTypeExec.cs" />
+    <Compile Include="DataModel\Core\RelationType.cs" />
+    <Compile Include="DataModel\Core\Relation.cs" />
+    <Compile Include="DataModel\Core\Format.cs" />
     <Compile Include="DataModel\Core\ContentMetaExec.cs" />
     <Compile Include="DataModel\Core\DocumentExec.cs" />
     <Compile Include="DataModel\Core\FolderExec.cs" />
@@ -82,6 +90,7 @@
     <Compile Include="DataModel\Core\PersistentObjectExec.cs" />
     <Compile Include="DataModel\Core\RepositoryAdvanced.cs" />
     <Compile Include="DataModel\Core\RepositoryExec.cs" />
+    <Compile Include="DataModel\Core\DmTypeExec.cs" />
     <Compile Include="DataModel\Core\UserExec.cs" />
     <Compile Include="DataModel\D2\C2View.cs" />
     <Compile Include="DataModel\D2\C2ViewEntry.cs" />
@@ -125,7 +134,7 @@
     <Compile Include="DataModel\Core\FolderLink.cs" />
     <Compile Include="DataModel\Base\Link.cs" />
     <Compile Include="DataModel\Base\Linkable.cs" />
-    <Compile Include="DataModel\Core\BatchOperation.cs" />
+    <Compile Include="DataModel\Core\Batch.cs" />
     <Compile Include="DataModel\Core\Group.cs" />
     <Compile Include="DataModel\Core\User.cs" />
     <Compile Include="DataModel\Core\PersistentObject.cs" />

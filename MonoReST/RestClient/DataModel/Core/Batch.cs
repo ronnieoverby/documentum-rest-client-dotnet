@@ -18,7 +18,7 @@ namespace Emc.Documentum.Rest.DataModel
     /// </summary>
     [DataContract(Name = "batch", Namespace = "http://identifiers.emc.com/vocab/documentum")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class Batch
+    public partial class Batch
     {
         public Batch()
         {

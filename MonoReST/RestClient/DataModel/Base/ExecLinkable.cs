@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Emc.Documentum.Rest.Net;
+using Emc.Documentum.Rest.Http.Utility;
 
 namespace Emc.Documentum.Rest.DataModel
 {
@@ -19,7 +20,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// Sets REST client
         /// </summary>
         /// <param name="client"></param>
-        public void SetClient(RestController client)
+        public virtual void SetClient(RestController client)
         {
             _client = client;
         }
@@ -31,6 +32,21 @@ namespace Emc.Documentum.Rest.DataModel
         {
             get { return _client; }
             set { this._client = value; }
+        }
+
+        /// <summary>
+        /// If a persistent object is a raw object, this method can be called to fetch the object again with its links
+        /// </summary>
+        /// <returns>Returns List</returns>
+        protected List<Link> GetFullLinks()
+        {
+            if (this.Links.Count == 1 && this.Links[0].Title.Equals(LinkRelations.SELF.Rel))
+            {
+                SingleGetOptions options = new SingleGetOptions { Links = true };
+                PersistentObject refreshed = Client.GetSingleton<PersistentObject>(this.Links, LinkRelations.SELF.Rel, options);
+                this.Links = refreshed.Links;
+            }
+            return this.Links;
         }
     }
 }

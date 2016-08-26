@@ -67,7 +67,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
         public ProfileConfiguration getProfileConfiguration(String uri)
         {
             ProfileConfiguration pConfig = Client.Get<ProfileConfiguration>(uri, null);
-            pConfig.SetClient(Client);
             return pConfig;
         }
     }

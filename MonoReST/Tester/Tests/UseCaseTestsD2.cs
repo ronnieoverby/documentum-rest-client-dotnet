@@ -33,7 +33,7 @@ namespace Emc.Documentum.Rest.Test
         /// <param name="ThreadNum"></param>
         /// <param name="numDocs"></param>
         public UseCaseTestsD2(RestController client, string RestHomeUri, string repositoryName, bool printResult, string path, 
-            int ThreadNum, int numDocs) : base(client, RestHomeUri, repositoryName, printResult, path, ThreadNum, numDocs)
+            int ThreadNum, int numDocs) : base(client, RestHomeUri, repositoryName, printResult, false, path, ThreadNum, numDocs)
         {
 
         }
@@ -159,7 +159,6 @@ namespace Emc.Documentum.Rest.Test
                 WriteOutput("\nUnable to get Rest Service at: " + RestHomeUri + " check to see if the service is available.");
                 return;
             }
-            home.SetClient(client);
             WriteOutput("Took " + ((DateTime.Now.Ticks - testStart) / TimeSpan.TicksPerMillisecond) + "ms to get RestService");
             //Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
             //Repository CurrentRepository = repositories.GetRepository(repositoryName);

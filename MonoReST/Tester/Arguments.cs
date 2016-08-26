@@ -30,8 +30,12 @@ namespace Emc.Documentum.Rest.Test
 
         public string ReadToEnd()
         {
-            string next = line.Substring(position);
-            position = line.Length - 1;
+            string next = "";
+            if (position < line.Length - 1)
+            {
+                next = line.Substring(position);
+                position = line.Length - 1;
+            }
             return next;
         }
 

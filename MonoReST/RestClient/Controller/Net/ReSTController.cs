@@ -240,7 +240,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.Get<T>(followingUri, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -256,7 +255,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 LinkRelations.SELF.Rel);
             T result = this.Get<T>(followingUri, null);
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -442,6 +440,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
+            if (obj != null && obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -481,63 +480,7 @@ namespace Emc.Documentum.Rest.Net
         /// <returns></returns>
         public T PostMultiparts<T>(string uri, T requestBody, IDictionary<Stream, string> otherParts, List<KeyValuePair<string, object>> query)
         {
-            uri = UriUtil.BuildUri(uri, query);
-            T obj = default(T);
-            try
-            {
-                using (var multiPartStream = new MultipartFormDataContent())
-                {
-                    MemoryStream stream = new MemoryStream();
-                    JsonSerializer.WriteObject(stream, requestBody);
-                    ByteArrayContent firstPart = new ByteArrayContent(stream.ToArray());
-                    firstPart.Headers.ContentType = JSON_VND_MEDIA_TYPE;
-                    firstPart.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "metadata" };
-                    multiPartStream.Add(firstPart);
-                    stream.Dispose();
-                    if (otherParts != null)
-                    {
-                        foreach (var other in otherParts)
-                        {
-                            StreamContent otherContent = new StreamContent(other.Key);
-                            otherContent.Headers.ContentType = new MediaTypeHeaderValue(other.Value);
-                            otherContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data") { Name = "binary" };
-                            multiPartStream.Add(otherContent);
-                        }
-                    }
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
-                    request.Content = multiPartStream;
-                    request.Headers.Accept.Add(JSON_GENERIC_MEDIA_TYPE);
-                    SetBasicAuthHeader(request);
-                    HttpCompletionOption option = HttpCompletionOption.ResponseContentRead;
-                    Task<HttpResponseMessage> response = _httpClient.SendAsync(request, option);
-                    long tStart = DateTime.Now.Ticks;
-                    HttpResponseMessage message = response.Result;
-                    long time = ((DateTime.Now.Ticks - tStart) / TimeSpan.TicksPerMillisecond);
-                    long? requestSize = request.Content == null ? 0L : request.Content.Headers.ContentLength;
-                    long? contentSize = message.Content == null ? 0L : message.Content.Headers.ContentLength;
-                    LogPerformance(time, request.Method.ToString(), uri, requestSize == null ? 0L : requestSize.Value, contentSize == null ? 0L : contentSize.Value);
-                    message.EnsureSuccessStatusCode();
-                    if (message.Content != null)
-                    {
-                        Task<Stream> result = message.Content.ReadAsStreamAsync();
-                        obj = JsonSerializer.ReadObject<T>(result.Result);
-                    }
-                    foreach (var other in otherParts)
-                    {
-                        other.Key.Dispose(); 
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                WriteToLog(LogLevel.ERROR, this.GetType().Name, "Error URI: " + uri, e);
-                if(e.InnerException is TaskCanceledException)
-                {
-                    throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
-                }
-            }
-            
-            return obj;
+            return PostMultiparts<T, T>(uri, requestBody, otherParts, query);
         }
 
        /// <summary>
@@ -607,7 +550,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
-
+            if (obj != null && obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -654,6 +597,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
+            if (obj != null && obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -693,7 +637,6 @@ namespace Emc.Documentum.Rest.Net
                         Task<Stream> result = message.Content.ReadAsStreamAsync();
                         obj = JsonSerializer.ReadObject<T>(result.Result);
                     }
-                    return obj;
                 }
             }
             catch (Exception e)
@@ -704,6 +647,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
+            if (obj != null && obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -723,7 +667,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             R result = this.Post<T, R>(followingUri, input, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -742,7 +685,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.Post<T>(followingUri, input, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -762,7 +704,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.PostMultiparts<T>(followingUri, input, otherParts, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -780,7 +721,6 @@ namespace Emc.Documentum.Rest.Net
         {
             R obj = default(R);
             obj = this.PostMultiparts<T, R>(fullUri, input, otherParts, options == null ? null : options.ToQueryList());
-            if (obj != null) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -800,7 +740,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.PostRaw<T>(followingUri, input, mime, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -849,7 +788,6 @@ namespace Emc.Documentum.Rest.Net
                         Task<Stream> result = message.Content.ReadAsStreamAsync();
                         obj = JsonSerializer.ReadObject<R>(result.Result);
                     }
-                    return obj;
             }
             catch (Exception e)
             {
@@ -859,6 +797,7 @@ namespace Emc.Documentum.Rest.Net
                     throw new Exception("A timeout occurred waiting on a response from request: " + uri,e.InnerException);
                 }
             }
+            if (obj != null && obj is Executable) (obj as Executable).SetClient(this);
             return obj;
         }
 
@@ -902,7 +841,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             T result = this.Put<T>(followingUri, input, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 
@@ -922,7 +860,6 @@ namespace Emc.Documentum.Rest.Net
                 links,
                 rel);
             R result = this.Put<T, R>(followingUri, input, options == null ? null : options.ToQueryList());
-            if (result != null) (result as Executable).SetClient(this);
             return result;
         }
 

@@ -9,39 +9,40 @@ using System.Threading.Tasks;
 
 namespace Emc.Documentum.Rest.Test
 {
-    public class DqlQueryTest
+    public class FormatTest
     {
-        public static void Run(RestController client, string RestHomeUri, string query, int itemsPerPage, bool pauseBetweenPages, string repositoryName, bool printResult)
+        public static void Run(RestController client, string RestHomeUri, string filter, int itemsPerPage, bool pauseBetweenPages, string repositoryName, bool printResult)
         {
             HomeDocument home = client.Get<HomeDocument>(RestHomeUri, null);
             Feed<Repository> repositories = home.GetRepositories<Repository>(new FeedGetOptions { Inline = true, Links = true });
             Repository repository = repositories.FindInlineEntry(repositoryName);
 
-            Console.WriteLine(String.Format("Running DQL query '{0}' on repository '{1}', with page size {2}", query, repository.Name, itemsPerPage));
+            Console.WriteLine(String.Format("Getting formats for filter '{0}' on repository '{1}', with page size {2}", filter, repository.Name, itemsPerPage));
             
-            // REST call to get the 1st page of the dql query
-            Feed<PersistentObject> queryResult = repository.ExecuteDQL<PersistentObject>(query, new FeedGetOptions() { ItemsPerPage = itemsPerPage, IncludeTotal = true});
-            if (queryResult != null)
+            // REST call to get the 1st page of formats for the specified filter
+            FeedGetOptions options = new FeedGetOptions() { ItemsPerPage = itemsPerPage, Inline = true, IncludeTotal = true, Filter = String.IsNullOrEmpty(filter) ? null : filter };
+            Feed<Format> formats = repository.GetFormats<Format>(options);
+            if (formats != null)
             {
-                int totalResults = queryResult.Total;
-                double totalPages = queryResult.PageCount;
+                int totalResults = formats.Total;
+                double totalPages = formats.PageCount;
                 int docProcessed = 0;
-                //int pageCount = queryResult.Entries.c
                 for (int i = 0; i < totalPages; i++)
                 {
                     Console.WriteLine("**************************** PAGE " + (i + 1) + " *******************************");
-                    foreach (Entry<PersistentObject> obj in queryResult.Entries)
+                    foreach (Entry<Format> obj in formats.Entries)
                     {
                         StringBuilder values = new StringBuilder();
-                        Console.WriteLine(String.Format("  ID: {0} \t\tName: {1}",
-                        GetAttr(obj.Content, new string[] {"r_object_id"}),
-                        GetAttr(obj.Content, new string[] {"object_name", "user_name", "group_name", "name"})));
+                        Console.WriteLine(String.Format("Name: {0}, \tExtension: {1}, \tMime: {2}",
+                                    obj.Content.GetPropertyString("name"),
+                                    obj.Content.GetPropertyString("dos_extension"),
+                                    obj.Content.GetPropertyString("mime_type")));
                         Console.WriteLine(values.ToString());
                         docProcessed++;
                     }
 
-                    // REST call to get next page of the dql query
-                    if (totalResults != docProcessed) queryResult = queryResult.NextPage();
+                    // REST call to get next page 
+                    if (totalResults != docProcessed) formats = formats.NextPage();
                     Console.WriteLine("*******************************************************************"); 
                     Console.WriteLine("Page:" + (i + 1) + " Results: " + docProcessed + " out of " + totalResults + " Processed");
                     Console.WriteLine("*******************************************************************");
@@ -54,7 +55,7 @@ namespace Emc.Documentum.Rest.Test
                         {
                             return;
                         }
-                        if(next.KeyChar.Equals('g'))
+                        if (next.KeyChar.Equals('g'))
                         {
                             pauseBetweenPages = false;
                         }
@@ -62,7 +63,7 @@ namespace Emc.Documentum.Rest.Test
                 }
                     
             }
-            if (printResult) Console.WriteLine(queryResult==null ? "NULL" : queryResult.ToString());
+            if (printResult) Console.WriteLine(formats == null ? "NULL" : formats.ToString());
         }
 
         private static string GetAttr(PersistentObject po, string[] attrs)

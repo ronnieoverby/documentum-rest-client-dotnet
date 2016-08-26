@@ -42,6 +42,7 @@ namespace Emc.Documentum.Rest.Test
         protected string parentFolderId;
         protected bool openEachFile = false;
         protected bool showdownloadedfiles = false;
+        protected bool pauseBetweenOperations = false;
         protected Logger loggerForm = null;
         // Disposable.
         protected bool _disposed;
@@ -56,7 +57,7 @@ namespace Emc.Documentum.Rest.Test
         /// <param name="path"></param>
         /// <param name="ThreadNum"></param>
         /// <param name="numDocs"></param>
-        public UseCaseTests(RestController client, string RestHomeUri, string repositoryName, bool printResult, string path, int ThreadNum, int numDocs)
+        public UseCaseTests(RestController client, string RestHomeUri, string repositoryName, bool printResult, bool pauseBetweenOperations, string path, int ThreadNum, int numDocs)
         {
             this.client = client;
             this.RestHomeUri = RestHomeUri;
@@ -65,6 +66,7 @@ namespace Emc.Documentum.Rest.Test
             this.tempPath = path;
             this.threadNum = ThreadNum;
             this.numDocs = numDocs;
+            this.pauseBetweenOperations = pauseBetweenOperations;
             this.testStart = DateTime.Now;
             this.testPrefix = testStart.ToString("yyyyMMddhhmmss")+"-"+threadNum;
             this.parentFolderId = "PARENT-" + testPrefix; // new Random().Next(0, 5); ;
@@ -353,7 +355,6 @@ namespace Emc.Documentum.Rest.Test
                 WriteOutput("\nUnable to get Rest Service at: " + RestHomeUri + " check to see if the service is available.");
                 return;
             }
-            home.SetClient(client);
             WriteOutput("Took " + ((DateTime.Now.Ticks - testStart)/TimeSpan.TicksPerMillisecond) + "ms to get RestService");
             CurrentRepository = GetCurrentRepository(home, repositoryName);
 
@@ -400,6 +401,20 @@ namespace Emc.Documentum.Rest.Test
                 if(preCheckOk)
                 {
                     if (Boolean.Parse(restTests[key].ToString())) runTestByName(key);
+                }
+
+                if (pauseBetweenOperations)
+                {
+                    Console.WriteLine("Press 'q' to quit, 'g' to run to end, or any other key to run next page..");
+                    ConsoleKeyInfo next = Console.ReadKey();
+                    if (next.KeyChar.Equals('q'))
+                    {
+                        return;
+                    }
+                    if (next.KeyChar.Equals('g'))
+                    {
+                        pauseBetweenOperations = false;
+                    }
                 }
                 
             }

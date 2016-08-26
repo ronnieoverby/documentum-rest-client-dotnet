@@ -43,10 +43,32 @@ namespace Emc.Documentum.Rest.DataModel
         public int Total { get; set; }
 
         /// <summary>
+        /// Number of items per page
+        /// </summary>
+        [DataMember(Name = "items-per-page")]
+        public int ItemsPerPage { get; set; }
+
+        /// <summary>
+        /// Current page number
+        /// </summary>
+        [DataMember(Name = "page")]
+        public int Page { get; set; }
+
+        /// <summary>
         /// The number of page
         /// </summary>
-        [DataMember(Name = "pageCount")]
-        public double PageCount { get; set; }
+        public double PageCount 
+        { 
+            get
+            {
+                double pageCount = -1;
+                if (Total > 0)
+                {
+                    pageCount = Math.Ceiling((double) Total / ItemsPerPage);
+                }
+                return pageCount;
+            }
+        }
 
         private List<Author> _authors = new List<Author>();
       
@@ -69,6 +91,20 @@ namespace Emc.Documentum.Rest.DataModel
                 _authors = value;
             }
         }
+
+        public override void SetClient(RestController client)
+        {
+            base.SetClient(client);
+            if (this.Entries != null)
+            {
+                foreach(Entry<T> entry in this.Entries)
+                {
+                    if (entry is Executable) (entry as Executable).SetClient(client);
+                    if (entry.Content is Executable) (entry.Content as Executable).SetClient(client);
+                }
+            }
+        }
+
         /// <summary>
         /// List of entries
         /// </summary>
@@ -101,7 +137,6 @@ namespace Emc.Documentum.Rest.DataModel
             string repositoryUri = AtomUtil.FindEntryHref(this, title);
             R obj = Client.Get<R>(repositoryUri, null);
             if (obj == null) return default(R);
-            (obj as Executable).SetClient(Client);
             return obj;
         }
 
@@ -114,7 +149,6 @@ namespace Emc.Documentum.Rest.DataModel
         {
             T entry = AtomUtil.FindInlineEntry(this, title);
             if (entry == null) return default(T);
-            (entry as Executable).SetClient(this.Client);
             return entry;
         }
 
@@ -127,7 +161,6 @@ namespace Emc.Documentum.Rest.DataModel
         {
             T entry = AtomUtil.FindInlineEntryBySummary(this, title);
             if (entry == null) return default(T); 
-            (entry as Executable).SetClient(this.Client);
             return entry;
         }
 

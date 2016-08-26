@@ -20,7 +20,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
         {
             String searchConfigURI = LinkRelations.FindLinkAsString(Links, LinkRelations.SEARCH_CONFIGURATION.Rel);
             SearchConfigurations sConfigs = Client.Get<SearchConfigurations>(searchConfigURI, null);
-            sConfigs.SetClient(Client);
             return sConfigs;
         }
 
@@ -28,7 +27,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
         {
             String profileConfigURI = LinkRelations.FindLinkAsString(Links, LinkRelations.PROFILE_CONFIGURATION.Rel);
             ProfileConfigurations pConfigs= Client.Get<ProfileConfigurations>(profileConfigURI, null);
-            pConfigs.SetClient(Client);
             return pConfigs;
         }
     }

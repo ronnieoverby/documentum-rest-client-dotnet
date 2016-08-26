@@ -49,6 +49,7 @@ namespace Emc.Documentum.Rest.Http.Utility
         /// The parent of this object
         /// </summary>
         public static LinkRelations PARENT = new LinkRelations("parent");
+        public static LinkRelations CHILD = new LinkRelations("child");
         public static LinkRelations ALTERNATE = new LinkRelations("alternate");
         public static LinkRelations PAGING_NEXT = new LinkRelations("next");
         public static LinkRelations PAGING_PREV = new LinkRelations("previous");
@@ -68,7 +69,11 @@ namespace Emc.Documentum.Rest.Http.Utility
         public static LinkRelations CHECKED_OUT_OBJECTS = new LinkRelations("checked-out-objects", true);
         public static LinkRelations REPOSITORIES = new LinkRelations("repositories", true);
         public static LinkRelations ABOUT = new LinkRelations("about", false);
-        public static LinkRelations RELATIONS = new LinkRelations("relations", true);    
+        public static LinkRelations RELATIONS = new LinkRelations("relations", true);
+        public static LinkRelations RELATION_TYPE = new LinkRelations("relation-type", true);
+        public static LinkRelations RELATION_TYPES = new LinkRelations("relation-types", true);
+        public static LinkRelations BATCHES = new LinkRelations("batches", true);
+        public static LinkRelations BATCH_CAPABILITIES = new LinkRelations("batch-capabilities", true);
         public static LinkRelations USERS = new LinkRelations("users", true);
         public static LinkRelations USER = new LinkRelations("user", true);
         public static LinkRelations GROUPS = new LinkRelations("groups", true);

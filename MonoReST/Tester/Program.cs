@@ -53,27 +53,41 @@ namespace Emc.Documentum.Rest.Test
                             string dql = cmd.ReadToEnd();
                             DqlQueryTest.Run(client, RestHomeUri, dql, itemsPerPage, pause, repositoryName, printResult);
                             break;
-                        case "content": // will run the conditions for Processdoc
-                            testProcessDocs();
+                        case "search":
+                            itemsPerPage = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            string terms = cmd.ReadToEnd();
+                            SearchTest.Run(client, RestHomeUri, terms, itemsPerPage, pause, repositoryName, printResult);
+                            break;
+                        case "content": 
+                            int numDocs = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            int threadCount = cmd.IsNextInt() ? cmd.NextInt() : 1;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            testUseCase(numDocs, threadCount, pause);
+                            break;
+                        case "format":
+                            itemsPerPage = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            string filter = cmd.ReadToEnd();
+                            FormatTest.Run(client, RestHomeUri, filter, itemsPerPage, pause, repositoryName, printResult);
+                            break;
+                        case "type":
+                            itemsPerPage = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            string parent = cmd.ReadToEnd();
+                            TypeTest.Run(client, RestHomeUri, parent, itemsPerPage, pause, repositoryName, printResult);
                             break;
                         case "d2tests":
-                            d2Tests();
-                            break;
-                        case "getmimetype":
-                            Console.WriteLine("Mime-Type for " + cmd.Peak() + " is:" + ObjectUtil.getMimeTypeFromFileName(cmd.Peak()));
-                            break;
-                        case "getformat":
-                            Console.WriteLine("Format for " + cmd.Peak() + " is:" + ObjectUtil.getDocumentumFormatForFile(cmd.Peak()));
-                            break;
+                            numDocs = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            threadCount = cmd.IsNextInt() ? cmd.NextInt() : 1;
+                            d2Tests(numDocs, threadCount);
+                            break;                 
                         case "cls":
                             Console.Clear();
                             break;
                         case "batch":
                             Console.WriteLine("Development in progress, not useable as of yet");
-                            break;
-                        case "search":
-                            Console.WriteLine("Development in progress, not useable as of yet");
-                            break;
+                            break; 
                         case "reconfig":
                             SetupTestData(false);
                             break;
@@ -96,11 +110,8 @@ namespace Emc.Documentum.Rest.Test
             }
         }
 
-        private static void d2Tests()
+        private static void d2Tests(int numDocs, int threadCount)
         {
-
-            int numDocs = getInputNumber("How many documents do you want to create and assign?", 10);
-            int threadCount = getInputNumber("How many threads would you like to run?", 1);
             long start = DateTime.Now.Ticks;
             if (threadCount >= 1)
             {
@@ -123,19 +134,16 @@ namespace Emc.Documentum.Rest.Test
 
         }
 
-        private static void testProcessDocs()
+        private static void testUseCase(int numDocs, int threadCount, bool pauseBetweenOperations)
         {
-            // Creates documents, assigns them to a temp holding area, then creates case/request folders
-            // and assigns the documents randomly. Cleans up the temp folder upon completion.
-            int numDocs = getInputNumber("How many documents do you want to create and assign?", 10);
-            int threadCount = getInputNumber("How many threads would you like to run?", 1);
+            bool printResult =  threadCount > 1 ? true : false;
             long start = DateTime.Now.Ticks;
-            if (threadCount >= 1)
+            if (threadCount > 1)
             {
                 for (int i = 0; i < threadCount; i++)
                 {
                     UseCaseTests aTest = new UseCaseTests(new RestController(username, password),
-                            RestHomeUri, repositoryName, threadCount > 1 ? true : false, "/Temp/Test-" + DateTime.Now.Ticks, i, numDocs);
+                            RestHomeUri, repositoryName, printResult, false, "/Temp/Test-" + DateTime.Now.Ticks, i, numDocs);
                     ThreadStart job = new ThreadStart(aTest.Start);
                     new Thread(job).Start();
                 }
@@ -145,7 +153,7 @@ namespace Emc.Documentum.Rest.Test
             else
             {
                 UseCaseTests aTest = new UseCaseTests(new RestController(username, password),
-                        RestHomeUri, repositoryName, threadCount > 1 ? true : false, "/Temp/Test-" + DateTime.Now.Ticks, 1, numDocs);
+                        RestHomeUri, repositoryName, printResult, pauseBetweenOperations, "/Temp/Test-" + DateTime.Now.Ticks, 1, numDocs);
                 aTest.Start();
             }
         }
@@ -187,13 +195,40 @@ namespace Emc.Documentum.Rest.Test
             Console.WriteLine("Usage: ");
             Console.WriteLine("\treconfig \n\t\t- prompt for re-entering configuration information.");
             Console.WriteLine("\tdql [<itemsPerPage> <pauseBetweenPages>] <dqlQuery>" 
-                            + "\n\t\t- Executes a DQL query and prints the results."
-                            + "\n\t\t  Example: dql 10 false select * from dm_cabinet");
-            Console.WriteLine("\tcontent \n\t\t- Runs the end to end tests with optional tthreads and number of documents. "
-                + "\n\t\t  The old Processdoc command will do the same test.");
-            Console.WriteLine("\tsearch \n\t\t- Prompts for search criteria and location then runs the search query.");
-            Console.WriteLine("\tgetmimetype <filename> \n\t\t- Returns the mimetype of the given fileName.");
-            Console.WriteLine("\tgetformat <filename> \n\t\t- Returns the documentum format name of the given fileName.");
+                            + "\n\t\t- Runs a DQL query and prints the results." 
+                            + "\n\t\t    <itemsPerPage>      - Number of items per DQL query result page"
+                            + "\n\t\t    <pauseBetweenPages> - Indicating whether to pause beteen DQL query result pagination"
+                            + "\n\t\t    <dqlQuery>          - DQL query expression; mandatory"
+                            + "\n\t\t- Example:" 
+                            + "\n\t\t    dql 10 false select * from dm_cabinet");
+            Console.WriteLine("\tcontent [<numDocs> <numThreads> <pause>]" 
+                            + "\n\t\t- Runs the end to end content CRUD tests with optional threads and number of documents. "
+                            + "\n\t\t    <numDocs>           - Number of documents to import"
+                            + "\n\t\t    <numThreads>        - Number of REST client threads"
+                            + "\n\t\t    <pause>             - Flag indicating whether to pause beteen operations; single thread only"
+                            + "\n\t\t- Example:"
+                            + "\n\t\t    content 10 1 true");
+            Console.WriteLine("\tsearch [<itemsPerPage> <pauseBetweenPages>] <terms>"
+                            + "\n\t\t- Runs the full-text search and prints the results. "
+                            + "\n\t\t    <itemsPerPage>      - Number of items per search result page"
+                            + "\n\t\t    <pauseBetweenPages> - Indicating whether to pause beteen search result pagination"
+                            + "\n\t\t    <terms>             - Terms to search in simple search language"
+                            + "\n\t\t- Example:"
+                            + "\n\t\t    search 10 true rest and documentum");
+            Console.WriteLine("\tformat [<itemsPerPage> <pauseBetweenPages> <filter>]"
+                            + "\n\t\t- Gets formats and prints the results. "
+                            + "\n\t\t    <itemsPerPage>      - Number of items per formats page"
+                            + "\n\t\t    <pauseBetweenPages> - Indicating whether to pause beteen formats pagination"
+                            + "\n\t\t    <filter>            - Filter expression to filter result; empty to return all formats"
+                            + "\n\t\t- Example:"
+                            + "\n\t\t    format 10 true starts-with(mime_type, 'text')");
+            Console.WriteLine("\ttype [<itemsPerPage> <pauseBetweenPages> <parentType>]"
+                            + "\n\t\t- Gets types and prints the results. "
+                            + "\n\t\t    <itemsPerPage>      - Number of items per types page"
+                            + "\n\t\t    <pauseBetweenPages> - Indicating whether to pause beteen types pagination"
+                            + "\n\t\t    <parentType>        - Get sub types for the specified parent; emtpy to return all types"
+                            + "\n\t\t- Example:"
+                            + "\n\t\t    format 10 true starts-with(mime_type, 'text')");
             Console.WriteLine("\tcls \n\t\t- Clear the console");
             Console.WriteLine("\texit \n\t\t- Exit the Test");
             Console.Write("\r\n\nCommand > ");

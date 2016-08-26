@@ -329,7 +329,10 @@ namespace Emc.Documentum.Rest.DataModel
             List<Entry<OutlineAtomContent>> entries = versions.Entries;
 
             // If the document is not already checked out, check it out.
-            if (!doc.IsCheckedOut()) doc = doc.Checkout();
+            if (!doc.IsCheckedOut())
+            {
+                doc = doc.Checkout();
+            }
             Document checkinDoc = NewDocument(doc.GetPropertyValue("object_name").ToString());
             if(!checkinOptions.ContainsParam("format")) {
                 checkinOptions.SetQuery("format", doc.GetPropertyValue("a_content_type"));

@@ -34,7 +34,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="options"></param>
         /// <returns>Feed</returns>
-        public Feed<T> GetCabinets<T>(FeedGetOptions options)
+        public Feed<T> GetCabinets<T>(FeedGetOptions options) where T : Cabinet
         {
             return Client.GetFeed<T>(
                 this.Links,
@@ -48,7 +48,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="options"></param>
         /// <returns>Feed</returns>
-        public Feed<T> GetUsers<T>(FeedGetOptions options)
+        public Feed<T> GetUsers<T>(FeedGetOptions options) where T : User
         {
             return Client.GetFeed<T>(
                 this.Links,
@@ -62,11 +62,95 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="options"></param>
         /// <returns>Feed</returns>
-        public Feed<T> GetGroups<T>(FeedGetOptions options)
+        public Feed<T> GetGroups<T>(FeedGetOptions options) where T : Group
         {
             return Client.GetFeed<T>(
                 this.Links,
                 Emc.Documentum.Rest.Http.Utility.LinkRelations.GROUPS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Get formats in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Feed</returns>
+        public Feed<T> GetFormats<T>(FeedGetOptions options) where T : Format
+        {
+            return Client.GetFeed<T>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.FORMATS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Get relations in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Feed</returns>
+        public Feed<T> GetRelations<T>(FeedGetOptions options) where T : Relation
+        {
+            return Client.GetFeed<T>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATIONS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Get relation types in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Feed</returns>
+        public Feed<T> GetRelationTypes<T>(FeedGetOptions options) where T : RelationType
+        {
+            return Client.GetFeed<T>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATION_TYPES.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Create a new relation types in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Relation</returns>
+        public T CreateRelation<T>(T newRelation, SingleGetOptions options) where T : Relation
+        {
+            return Client.Post<T>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATIONS.Rel,
+                newRelation,
+                options);
+        }
+
+        /// <summary>
+        /// Get network locations in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Feed</returns>
+        public Feed<T> GetNetworkLocations<T>(FeedGetOptions options) where T : NetworkLocation
+        {
+            return Client.GetFeed<T>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.NETWORK_LOCATIONS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Get types in this repository
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns>Feed</returns>
+        public Feed<DmType> GetTypes(FeedGetOptions options)
+        {
+            return Client.GetFeed<DmType>(
+                this.Links,
+                Emc.Documentum.Rest.Http.Utility.LinkRelations.TYPES.Rel,
                 options);
         }
 
@@ -76,7 +160,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="options"></param>
         /// <returns>Feed</returns>
-        public Feed<T> GetCheckedOutObjects<T>(FeedGetOptions options)
+        public Feed<T> GetCheckedOutObjects<T>(FeedGetOptions options) where T : PersistentObject
         {
             return Client.GetFeed<T>(
                 this.Links,
@@ -120,17 +204,9 @@ namespace Emc.Documentum.Rest.DataModel
             List<KeyValuePair<string, object>> pa = options.ToQueryList();
             pa.Add(new KeyValuePair<string, object>("dql", dql));
             Feed<T> feed = this.Client.Get<Feed<T>>(dqlUriWithoutTemplateParams, pa);
-            if (feed != null)
-            {
-                feed.Client = Client;
-            }
-
             if (count > 0)
             {
                 feed.Total = (int)count;
-                int itemsPerPage = (options.ItemsPerPage > 0) ? options.ItemsPerPage : feed.Total;
-                pageCount = Math.Ceiling((double)count / itemsPerPage);
-                feed.PageCount = pageCount;
             }
             return feed;
         }
@@ -142,7 +218,7 @@ namespace Emc.Documentum.Rest.DataModel
         /// <typeparam name="T"></typeparam>
         /// <param name="search"></param>
         /// <returns>Feed</returns>
-        public Feed<T> ExecuteSimpleSearch<T>(SearchOptions search)
+        public Feed<T> ExecuteSimpleSearch<T>(SearchOptions search) where T : PersistentObject
         {
             decimal count = 0;
             double pageCount = 0;
@@ -152,30 +228,34 @@ namespace Emc.Documentum.Rest.DataModel
             searchUri = searchUri.Substring(0, searchUri.IndexOf("{"));
             List<KeyValuePair<string, object>> pa = search.ToQueryList();
             Feed<T> feed = this.Client.Get<Feed<T>>(searchUri, pa);
-            if (feed != null)
-            {
-                feed.Client = Client;
-            }
-            count = feed == null ? 0 : feed.Total;
-
-            if (count > 0)
-            {
-                int itemsPerPage = (search.ItemsPerPage > 0) ? search.ItemsPerPage : feed.Total;
-                pageCount = Math.Ceiling((double)count / itemsPerPage);
-                feed.PageCount = pageCount;
-            }
-            long tStart = DateTime.Now.Ticks;
-            // If raw search is not specified, get the full object for each item returned on the page
-            if (!search.Raw && feed != null)
-            {
-                foreach (Entry<T> entry in feed.Entries)
-                {
-                    entry.Content = GetObjectByQualification<T>(String.Format("dm_sysobject where r_object_id='{0}'", entry.Id.ToString()), null);
-                }
-            }
-
             return feed;
+        }
 
+        /// <summary>
+        /// Create a synchronous batch
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns>batch</returns>
+        public Batch CreateBatch(Batch batch)
+        {
+            return Client.Post<Batch>(
+                this.Links,
+                LinkRelations.BATCHES.Rel,
+                batch,
+                null);
+        }
+
+        /// <summary>
+        /// Get batch capabilities
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns>batch capabilities</returns>
+        public BatchCapabilities GetBatchCapabilities()
+        {
+            return Client.GetSingleton<BatchCapabilities>(
+                this.Links,
+                LinkRelations.BATCH_CAPABILITIES.Rel,
+                null);
         }
 
         /// <summary>

@@ -44,7 +44,6 @@ namespace Emc.Documentum.Rest.DataModel.D2
         public SearchConfiguration getSearchConfiguration(String uri)
         {
            SearchConfiguration sConfig = Client.Get<SearchConfiguration>(uri, null);
-           sConfig.SetClient(Client);
            return sConfig;
 
         }

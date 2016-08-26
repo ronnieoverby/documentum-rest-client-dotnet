@@ -85,7 +85,6 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns Folder object</returns>
         public Folder CreateSubFolder(Folder newObj, GenericOptions options)
         {
-            if (newObj.Client == null) newObj.SetClient(this.Client);
             return Client.Post<Folder>(
                 GetFullLinks(),
                 LinkRelations.FOLDERS.Rel,
@@ -101,8 +100,6 @@ namespace Emc.Documentum.Rest.DataModel
         /// <returns>Returns RestDocument object</returns>
         public Document CreateSubDocument(Document newObj, GenericOptions options)
         {
-            if (newObj.Client == null) newObj.SetClient(this.Client);
-
             return Client.Post<Document>(
                 GetFullLinks(),
                 LinkRelations.DOCUMENTS.Rel,
