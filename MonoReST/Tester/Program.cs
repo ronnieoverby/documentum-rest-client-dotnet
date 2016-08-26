@@ -30,9 +30,9 @@ namespace Emc.Documentum.Rest.Test
         {
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WindowWidth = 150;
+            Console.WindowWidth = 120;
             Console.WindowHeight = 40;
-            Console.BufferWidth = 150;
+            Console.BufferWidth = 120;
             Console.BufferHeight = 1000;
 
             NameValueCollection config = getDefaultConfiguration();
