@@ -18,7 +18,7 @@ The client samples have been verified against Documentum REST Services 7.2. For 
 
 ### RestClient
 
-This project implements a REST client as a DLL library. It implements the REST API functions of folder/document CRUD, folder navigation, document versioning, content upload/download, copy, move, link, unlink, DQL query, etc. However, it does not cover the full list of Documentum REST resources yet. It implements the JSON media type. It implements HTTP Basic authentication and optionally supports Kerberos.
+This project implements a REST client as a DLL library. It implements all services in Documentum REST 7.2 . It uses the JSON media type. It supports HTTP Basic authentication and optionally supports Kerberos.
 
 Here is the code to start a Documentum REST services from **Home Document**.
 ```C#
