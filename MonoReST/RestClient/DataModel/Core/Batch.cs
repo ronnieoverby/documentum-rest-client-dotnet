@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Net.Http;
 using System.IO;
 using System.Runtime.Serialization.Json;
@@ -20,30 +19,26 @@ namespace Emc.Documentum.Rest.DataModel
     [ClassInterface(ClassInterfaceType.AutoDual)]
     public partial class Batch
     {
-        public Batch()
-        {
-
-        }
-        public Batch(string description, bool transactional, bool sequential, string onError, bool returnRequest) 
-        {
-            Description = description;
-            Transactional = transactional;
-            Sequential = sequential;
-            OnError = onError;
-            ReturnRequest = returnRequest;
-        }
-        public Batch(string description, bool transactional, bool sequential, string onError, bool returnRequest, List<Operation> operations)
-        {
-            Description = description;
-            Transactional = transactional;
-            Sequential = sequential;
-            OnError = onError;
-            ReturnRequest = returnRequest;
-            Operations = operations;
-        }
-
         [DataMember(Name = "description")]
-        public string Description {get; set;}
+        public string Description { get; set; }
+
+        [DataMember(Name = "state")]
+        public string State { get; set; }
+
+        [DataMember(Name = "substate")]
+        public string Substate { get; set; }
+
+        [DataMember(Name = "owner")]
+        public string Owner { get; set; }
+
+        [DataMember(Name = "submitted")]
+        public string Submitted { get; set; }
+
+        [DataMember(Name = "started")]
+        public string Started { get; set; }
+
+        [DataMember(Name = "finished")]
+        public string Finished { get; set; }
 
         [DataMember(Name = "transactional")]
         public Boolean Transactional { get; set; }
@@ -58,20 +53,27 @@ namespace Emc.Documentum.Rest.DataModel
         public Boolean ReturnRequest { get; set; }
 
         [DataMember(Name = "operations")]
-        public List<Operation> Operations { get; set; }
-        public Operation GetNewOperation()
+        public List<BatchOperation> Operations 
         {
-            return new Operation();
+            get 
+            { 
+                if (_operations == null)
+                {
+                    _operations = new List<BatchOperation>();
+                }
+                return _operations;  
+            }
+            set { _operations = value; }
         }
 
-
+        private List<BatchOperation> _operations = new List<BatchOperation>();
     }
 
     /// <summary>
     /// Batch operation model
     /// </summary>
     [DataContract(Name = "operation", Namespace = "http://identifiers.emc.com/vocab/documentum")]
-    public partial class Operation
+    public partial class BatchOperation
     {
         [DataMember(Name = "id")]
         public string Id { get; set; }
@@ -79,34 +81,63 @@ namespace Emc.Documentum.Rest.DataModel
         [DataMember(Name = "description")]
         public string Description { get; set; }
 
-        [DataMember(Name = "uri")]
-        public string URI { get; set; }
+        [DataMember(Name = "state")]
+        public string State { get; set; }
 
-        [DataMember(Name = "minor")]
-        public string Minor { get; set; }
+        [DataMember(Name = "started")]
+        public string Started { get; set; }
 
-        private List<Header> _headers = new List<Header>();
-        [DataMember(Name = "headers")]
-        public List<Header> Headers
-        {
-            get
-            {
-                return _headers;
-            }
-        }
+        [DataMember(Name = "finished")]
+        public string Finished { get; set; }
 
-        public void addHeader(String name, String value) {
-            Header header = new Header();
-            header.Name = name;
-            header.Value = value;
-            Headers.Add(header);
-        }
+        [DataMember(Name = "request")]
+        public BatchOperationRequest Request { get; set; }
+
+        [DataMember(Name = "response")]
+        public BatchOperationResponse Response { get; set; }
     }
 
     /// <summary>
-    /// Batch request and response header model
+    /// Batch operation request model
     /// </summary>
-    public partial class Header 
+    [DataContract(Name = "request", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    public partial class BatchOperationRequest : BatchOperationItem
+    {
+        [DataMember(Name = "method")]
+        public string Method { get; set; }
+
+        [DataMember(Name = "uri")]
+        public string Uri { get; set; }
+    }
+
+    /// <summary>
+    /// Batch operation response model
+    /// </summary>
+    [DataContract(Name = "response", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    public partial class BatchOperationResponse : BatchOperationItem
+    {
+        [DataMember(Name = "status")]
+        public Int32 Status { get; set; }
+    }
+
+    /// <summary>
+    /// Batch operation basic model
+    /// </summary>
+    [DataContract(Name = "response", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    public partial class BatchOperationItem
+    {
+        [DataMember(Name = "headers")]
+        public List<BatchOperationHeader> Headers { get; set; }
+
+        [DataMember(Name = "entity")]
+        public string Entity { get; set; }
+    }
+
+    /// <summary>
+    /// Batch operation header model
+    /// </summary>
+    [DataContract(Name = "header", Namespace = "http://identifiers.emc.com/vocab/documentum")]
+    public partial class BatchOperationHeader 
     {
         [DataMember(Name = "name")]
         public string Name { get; set; }

@@ -77,6 +77,9 @@ namespace Emc.Documentum.Rest.Test
                             string parent = cmd.ReadToEnd();
                             TypeTest.Run(client, RestHomeUri, parent, itemsPerPage, pause, repositoryName, printResult);
                             break;
+                        case "batch":
+                            BatchTest.Run(client, RestHomeUri, repositoryName);
+                            break; 
                         case "d2tests":
                             numDocs = cmd.IsNextInt() ? cmd.NextInt() : 10;
                             threadCount = cmd.IsNextInt() ? cmd.NextInt() : 1;
@@ -85,9 +88,6 @@ namespace Emc.Documentum.Rest.Test
                         case "cls":
                             Console.Clear();
                             break;
-                        case "batch":
-                            Console.WriteLine("Development in progress, not useable as of yet");
-                            break; 
                         case "reconfig":
                             SetupTestData(false);
                             break;
@@ -229,6 +229,8 @@ namespace Emc.Documentum.Rest.Test
                             + "\n\t\t    <parentType>        - Get sub types for the specified parent; emtpy to return all types"
                             + "\n\t\t- Example:"
                             + "\n\t\t    format 10 true starts-with(mime_type, 'text')");
+            Console.WriteLine("\tbatch"
+                            + "\n\t\t- Execute a batch service. ");
             Console.WriteLine("\tcls \n\t\t- Clear the console");
             Console.WriteLine("\texit \n\t\t- Exit the Test");
             Console.Write("\r\n\nCommand > ");

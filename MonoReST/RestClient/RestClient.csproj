@@ -73,9 +73,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controller\Utility\BatchRequestBuilder.cs" />
+    <Compile Include="Controller\Utility\BatchResponseParser.cs" />
     <Compile Include="DataModel\Base\ExecLinkable.cs" />
+    <Compile Include="DataModel\Core\BatchExec.cs" />
     <Compile Include="DataModel\Core\DmType.cs" />
     <Compile Include="DataModel\Core\BatchCapabilities.cs" />
+    <Compile Include="DataModel\Core\Error.cs" />
     <Compile Include="DataModel\Core\NetworkLocation.cs" />
     <Compile Include="DataModel\Core\RelationExec.cs" />
     <Compile Include="DataModel\Core\RelationTypeExec.cs" />
@@ -118,7 +122,6 @@
     <Compile Include="Controller\Options\GenericOptions.cs" />
     <Compile Include="Controller\Options\SingleGetOptions.cs" />
     <Compile Include="Controller\Utility\AtomUtil.cs" />
-    <Compile Include="Controller\Utility\HttpUtil.cs" />
     <Compile Include="Controller\Utility\LoggerFacade.cs" />
     <Compile Include="Controller\Utility\MimeMapping.cs" />
     <Compile Include="Controller\Utility\ObjectUtil.cs" />

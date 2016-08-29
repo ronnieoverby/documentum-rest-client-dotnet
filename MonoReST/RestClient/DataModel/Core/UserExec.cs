@@ -16,9 +16,9 @@ namespace Emc.Documentum.Rest.DataModel
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        public Folder GetHomeCabinet(SingleGetOptions options)
+        public Cabinet GetHomeCabinet(SingleGetOptions options)
         {
-            return Client.GetSingleton<Folder>(GetFullLinks(), LinkRelations.DEFAULT_FOLDER.Rel, options);
+            return Client.GetSingleton<Cabinet>(GetFullLinks(), LinkRelations.DEFAULT_FOLDER.Rel, options);
         }
 
         /// <summary>

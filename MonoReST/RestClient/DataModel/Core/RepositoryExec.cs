@@ -225,7 +225,6 @@ namespace Emc.Documentum.Rest.DataModel
 
             if (search == null) search = new SearchOptions();
             string searchUri = LinkRelations.FindLinkAsString(this.Links, LinkRelations.SEARCH.Rel);
-            searchUri = searchUri.Substring(0, searchUri.IndexOf("{"));
             List<KeyValuePair<string, object>> pa = search.ToQueryList();
             Feed<T> feed = this.Client.Get<Feed<T>>(searchUri, pa);
             return feed;

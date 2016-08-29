@@ -178,25 +178,25 @@ namespace Emc.Documentum.Rest.Http.Utility
 
                 foreach(Link link in links)
                 {
-                    //if (links.Count == 1 && ! rel.Equals("self"))
-                    //{
-                    //    String service = "";
-                    //    if (rel != null && !rel.Trim().Equals(""))
-                    //    {
-                    //        String[] relPieces = rel.Split(new char[] {'/'});
-                    //        service = relPieces[relPieces.Length - 1];
-                    //    }
-                    //    if (!service.Equals(""))
-                    //        return link.Href + "/" + service;
-                    //    else
-                    //        return link.Href;
-                    //}
-
-                   
-                    //http://identifiers.emc.com/linkrel/checkout: http://localhost:8080/dctm-rest/repositories/Process/objects/xxxxxxxxxxxxxxxx/lock
                     if (link.Rel.StartsWith(rel)) 
                     {
-                        return String.IsNullOrEmpty(link.Href) ? link.Hreftemplate : link.Href;
+                        if(String.IsNullOrEmpty(link.Href))
+                        {
+                            string hrefT = link.Hreftemplate;
+                            if (hrefT.Contains("%7B"))
+                            {
+                                hrefT = hrefT.Substring(0, hrefT.LastIndexOf("%7B"));
+                            }
+                            else if (hrefT.Contains("{"))
+                            {
+                                hrefT = hrefT.Substring(0, hrefT.LastIndexOf("{"));
+                            }
+                            return hrefT;                           
+                        }
+                        else
+                        {
+                            return link.Href;
+                        }
                     }
                 }
             }

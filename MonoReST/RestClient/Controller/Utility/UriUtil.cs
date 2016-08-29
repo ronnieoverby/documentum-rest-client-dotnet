@@ -57,7 +57,7 @@ namespace Emc.Documentum.Rest.Http.Utility
         /// <param name="uri"></param>
         /// <param name="parameterName"></param>
         /// <returns></returns>
-        public static string getParameterFromUri(Uri uri, string parameterName)
+        public static string GetParameterFromUri(Uri uri, string parameterName)
         {
             try
             {
