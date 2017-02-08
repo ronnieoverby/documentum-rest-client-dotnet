@@ -91,6 +91,7 @@ namespace Emc.Documentum.Rest.Net
                 JsonWriter writer = new JsonTextWriter(new StreamWriter(ms));
                 writer.Formatting = Formatting;
                 SERIALIZER.Serialize(writer, obj);
+                writer.Flush();
                 json = Encoding.UTF8.GetString(ms.ToArray());
                 return json;
             }

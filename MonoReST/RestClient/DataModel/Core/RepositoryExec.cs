@@ -2,17 +2,10 @@
 using Emc.Documentum.Rest.Http.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.Serialization;
-using System.Net.Http;
-using System.IO;
-using System.IO.Compression;
 
 namespace Emc.Documentum.Rest.DataModel
 {
-    public partial class Repository 
+    public partial class Repository
     {
         /// <summary>
         /// Get current login user resource
@@ -38,7 +31,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.CABINETS.Rel,
+                LinkRelations.CABINETS.Rel,
                 options);
         }
 
@@ -52,7 +45,22 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.USERS.Rel,
+                LinkRelations.USERS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Create a new user in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>User</returns>
+        public T CreateUser<T>(T newUser, SingleGetOptions options) where T : User
+        {
+            return Client.Post<T>(
+                this.Links,
+                LinkRelations.USERS.Rel,
+                newUser,
                 options);
         }
 
@@ -66,7 +74,22 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.GROUPS.Rel,
+                LinkRelations.GROUPS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Create a new group in this repository
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns>Group</returns>
+        public T CreateGroup<T>(T newGroup, SingleGetOptions options) where T : Group
+        {
+            return Client.Post<T>(
+                this.Links,
+                LinkRelations.GROUPS.Rel,
+                newGroup,
                 options);
         }
 
@@ -80,7 +103,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.FORMATS.Rel,
+                LinkRelations.FORMATS.Rel,
                 options);
         }
 
@@ -94,7 +117,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATIONS.Rel,
+                LinkRelations.RELATIONS.Rel,
                 options);
         }
 
@@ -108,7 +131,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATION_TYPES.Rel,
+                LinkRelations.RELATION_TYPES.Rel,
                 options);
         }
 
@@ -122,7 +145,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.Post<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.RELATIONS.Rel,
+                LinkRelations.RELATIONS.Rel,
                 newRelation,
                 options);
         }
@@ -150,7 +173,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<DmType>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.TYPES.Rel,
+                LinkRelations.TYPES.Rel,
                 options);
         }
 
@@ -164,7 +187,7 @@ namespace Emc.Documentum.Rest.DataModel
         {
             return Client.GetFeed<T>(
                 this.Links,
-                Emc.Documentum.Rest.Http.Utility.LinkRelations.CHECKED_OUT_OBJECTS.Rel,
+                LinkRelations.CHECKED_OUT_OBJECTS.Rel,
                 options);
         }
 

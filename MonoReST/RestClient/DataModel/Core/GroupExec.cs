@@ -53,5 +53,43 @@ namespace Emc.Documentum.Rest.DataModel
                 LinkRelations.USERS.Rel,
                 options);
         }
+
+        /// <summary>
+        /// Get groups feed which are members of this group
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public Feed<T> GetGroupGroups<T>(FeedGetOptions options)
+        {
+            return Client.GetFeed<T>(
+                GetFullLinks(),
+                LinkRelations.GROUPS.Rel,
+                options);
+        }
+
+        /// <summary>
+        /// Update a group
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="newGroup"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T Update<T>(T newGroup, GenericOptions options) where T : Group
+        {
+            return Client.Post<T>(
+                GetFullLinks(),
+                LinkRelations.EDIT.Rel,
+                newGroup,
+                options);
+        }
+
+        /// <summary>
+        ///  Delete a group       
+        /// </summary>
+        public void Delete()
+        {
+            Client.Delete(LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.DELETE.Rel));
+        }
     }
 }

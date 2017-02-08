@@ -59,7 +59,7 @@ namespace Emc.Documentum.Rest.Test
                             string terms = cmd.ReadToEnd();
                             SearchTest.Run(client, RestHomeUri, terms, itemsPerPage, pause, repositoryName, printResult);
                             break;
-                        case "content": 
+                        case "content":
                             int numDocs = cmd.IsNextInt() ? cmd.NextInt() : 10;
                             int threadCount = cmd.IsNextInt() ? cmd.NextInt() : 1;
                             pause = cmd.IsNextBool() ? cmd.NextBool() : false;
@@ -77,14 +77,28 @@ namespace Emc.Documentum.Rest.Test
                             string parent = cmd.ReadToEnd();
                             TypeTest.Run(client, RestHomeUri, parent, itemsPerPage, pause, repositoryName, printResult);
                             break;
+                        case "user":
+                            itemsPerPage = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            filter = cmd.Next();
+                            string userName = cmd.ReadToEnd();
+                            UserTest.Run(client, RestHomeUri, filter, itemsPerPage, pause, repositoryName, printResult, userName);
+                            break;
+                        case "group":
+                            itemsPerPage = cmd.IsNextInt() ? cmd.NextInt() : 10;
+                            pause = cmd.IsNextBool() ? cmd.NextBool() : false;
+                            filter = cmd.Next();
+                            string groupName = cmd.ReadToEnd();
+                            GroupTest.Run(client, RestHomeUri, filter, itemsPerPage, pause, repositoryName, printResult, groupName);
+                            break;
                         case "batch":
                             BatchTest.Run(client, RestHomeUri, repositoryName);
-                            break; 
+                            break;
                         case "d2tests":
                             numDocs = cmd.IsNextInt() ? cmd.NextInt() : 10;
                             threadCount = cmd.IsNextInt() ? cmd.NextInt() : 1;
                             d2Tests(numDocs, threadCount);
-                            break;                 
+                            break;
                         case "cls":
                             Console.Clear();
                             break;
@@ -100,7 +114,7 @@ namespace Emc.Documentum.Rest.Test
                 {
                     Console.WriteLine("Got exception in test: " + e.Message + "\r\n" + e.StackTrace);
                 }
-                
+
                 if (!next.Equals("cls"))
                 {
                     Console.WriteLine("Press any key to continue...\r\n");
@@ -136,7 +150,7 @@ namespace Emc.Documentum.Rest.Test
 
         private static void testUseCase(int numDocs, int threadCount, bool pauseBetweenOperations)
         {
-            bool printResult =  threadCount > 1 ? true : false;
+            bool printResult = threadCount > 1 ? true : false;
             long start = DateTime.Now.Ticks;
             if (threadCount > 1)
             {
@@ -176,7 +190,7 @@ namespace Emc.Documentum.Rest.Test
             {
                 Console.WriteLine("\t" + title + " [" + value + "]");
                 Console.WriteLine();
-                input = getLineOfInput("","");
+                input = getLineOfInput("", "");
                 if (input != null && !input.Trim().Equals(""))
                 {
                     value = int.Parse(input);
@@ -194,14 +208,14 @@ namespace Emc.Documentum.Rest.Test
         {
             Console.WriteLine("Usage: ");
             Console.WriteLine("\treconfig \n\t\t- prompt for re-entering configuration information.");
-            Console.WriteLine("\tdql [<itemsPerPage> <pauseBetweenPages>] <dqlQuery>" 
-                            + "\n\t\t- Runs a DQL query and prints the results." 
+            Console.WriteLine("\tdql [<itemsPerPage> <pauseBetweenPages>] <dqlQuery>"
+                            + "\n\t\t- Runs a DQL query and prints the results."
                             + "\n\t\t    <itemsPerPage>      - Number of items per DQL query result page"
                             + "\n\t\t    <pauseBetweenPages> - Indicating whether to pause beteen DQL query result pagination"
                             + "\n\t\t    <dqlQuery>          - DQL query expression; mandatory"
-                            + "\n\t\t- Example:" 
+                            + "\n\t\t- Example:"
                             + "\n\t\t    dql 10 false select * from dm_cabinet");
-            Console.WriteLine("\tcontent [<numDocs> <numThreads> <pause>]" 
+            Console.WriteLine("\tcontent [<numDocs> <numThreads> <pause>]"
                             + "\n\t\t- Runs the end to end content CRUD tests with optional threads and number of documents. "
                             + "\n\t\t    <numDocs>           - Number of documents to import"
                             + "\n\t\t    <numThreads>        - Number of REST client threads"
@@ -231,6 +245,22 @@ namespace Emc.Documentum.Rest.Test
                             + "\n\t\t    format 10 true starts-with(mime_type, 'text')");
             Console.WriteLine("\tbatch"
                             + "\n\t\t- Execute a batch service. ");
+            Console.WriteLine("\tuser [<itemsPerPage> <pauseBetweenPages> <filter> <userNameToCreatedOrRetrieved>]"
+                            + "\n\t\t- Gets users, CRUD user and prints the results. "
+                            + "\n\t\t    <itemsPerPage>       - Number of items per users page"
+                            + "\n\t\t    <pauseBetweenPages>  - Indicating whether to pause beteen users pagination"
+                            + "\n\t\t    <filter>             - Filter expression to filter result; 'null' to return all users"
+                            + "\n\t\t    <userName>  - Specify the value of user_name that you want to create with or retrieve"
+                            + "\n\t\t-  Example:"
+                            + "\n\t\t   user 10 true starts-with(user_name,'dm') net_sample_test_user");
+            Console.WriteLine("\tgroup [<itemsPerPage> <pauseBetweenPages> <filter> <groupNameToCreatedOrRetrieved>]"
+                          + "\n\t\t- Gets groups, CRUD group and prints the results. "
+                          + "\n\t\t    <itemsPerPage>       - Number of items per groups page"
+                          + "\n\t\t    <pauseBetweenPages>  - Indicating whether to pause beteen groups pagination"
+                          + "\n\t\t    <filter>             - Filter expression to filter result; 'null' to return all groups"
+                          + "\n\t\t    <groupName>  - Specify the value of group_name that you want to create with or retrieve"
+                          + "\n\t\t-  Example:"
+                          + "\n\t\t   group 10 true starts-with(group_name,'ne') net_sample_test_group");
             Console.WriteLine("\tcls \n\t\t- Clear the console");
             Console.WriteLine("\texit \n\t\t- Exit the Test");
             Console.Write("\r\n\nCommand > ");
@@ -243,20 +273,21 @@ namespace Emc.Documentum.Rest.Test
             string line = null;
             bool isInputValid = false;
 
-            while (!isInputValid )
+            while (!isInputValid)
             {
                 if (!String.IsNullOrEmpty(prompt)) Console.WriteLine(prompt);
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 line = Console.ReadLine();
                 Console.ForegroundColor = ConsoleColor.White;
-                if( String.IsNullOrEmpty(line) && defaultValue.StartsWith("#EXAMPLE: ") || line.StartsWith("#EXAMPLE: ") )
+                if (String.IsNullOrEmpty(line) && defaultValue.StartsWith("#EXAMPLE: ") || line.StartsWith("#EXAMPLE: "))
                 {
                     Console.WriteLine("\nInvalid input, value should not start with \"#EXAMPLE: \"");
-                } else
+                }
+                else
                 {
                     isInputValid = true;
                 }
-                
+
             }
 
             return line;
@@ -317,7 +348,7 @@ namespace Emc.Documentum.Rest.Test
             }
 
             setupClient();
-            
+
         }
 
         private static void setupClient()
@@ -340,7 +371,8 @@ namespace Emc.Documentum.Rest.Test
              )
             {
                 hasConfigInitialized = true;
-            } else
+            }
+            else
             {
                 hasConfigInitialized = false;
             }
@@ -381,7 +413,7 @@ namespace Emc.Documentum.Rest.Test
             if (String.IsNullOrEmpty(username)) username = defaultUsername;
 
 
-            password = getLineOfHiddenInput("Set the user password: [**********]",defaultPassword);
+            password = getLineOfHiddenInput("Set the user password: [**********]", defaultPassword);
             if (String.IsNullOrEmpty(password)) password = defaultPassword;
 
             repositoryName = getLineOfInput("Set the repository name: [" + defaultRepositoryName + "]", defaultRepositoryName);

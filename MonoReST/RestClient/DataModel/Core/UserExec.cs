@@ -22,6 +22,30 @@ namespace Emc.Documentum.Rest.DataModel
         }
 
         /// <summary>
+        /// Update a user
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="newUser"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public T Update<T>(T newUser, GenericOptions options) where T : User
+        {
+            return Client.Post<T>(
+                GetFullLinks(),
+                LinkRelations.EDIT.Rel,
+                newUser,
+                options);
+        }
+
+        /// <summary>
+        ///  Delete a user       
+        /// </summary>
+        public void Delete()
+        {
+            Client.Delete(LinkRelations.FindLinkAsString(GetFullLinks(), LinkRelations.DELETE.Rel));
+        }
+
+        /// <summary>
         /// Get the groups feed of which this user is a member
         /// </summary>
         /// <typeparam name="T"></typeparam>
