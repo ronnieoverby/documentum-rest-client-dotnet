@@ -4,15 +4,11 @@ using Emc.Documentum.Rest.Net;
 using Emc.Documentum.Rest.Http.Utility;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.IO;
 using System.Configuration;
 using System.Collections.Specialized;
 using System.Windows.Forms;
 using Emc.Documentum.Rest.DataModel.D2;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 
 namespace Emc.Documentum.Rest.Test
 {

@@ -1,1 +1,0 @@
-Follow https://docs.nuget.org/consume/package-manageer-dialog to upgrade Json.NET with NuGet Packages in Visual Studio.

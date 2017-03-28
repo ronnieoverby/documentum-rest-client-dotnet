@@ -64,7 +64,7 @@ namespace Emc.Documentum.Rest.Utility
         /// <param name="userName"></param>
         public LoggerFacade(string process, string processSubTag, string folderID, string userName)
         {
-            if (string.IsNullOrWhiteSpace(process))
+            if (process.IsNullOrWhiteSpace())
                 throw new ArgumentException("The process parameter cannot be null or whitespace.");
 
             _process = process;
@@ -85,12 +85,12 @@ namespace Emc.Documentum.Rest.Utility
         /// <param name="verboseMessage"></param>
         public void WriteToLog(LogLevel logLevel, string thread, string message, string verboseMessage)
         {
-            if (string.IsNullOrWhiteSpace(message))
+            if ((message.IsNullOrWhiteSpace()))
                 throw new ArgumentException("The message parameter cannot be null or whitespace.");
 
-            if (!string.IsNullOrWhiteSpace(thread)) thread = thread.Trim();
-            if (!string.IsNullOrWhiteSpace(message)) message = message.Trim();
-            if (!string.IsNullOrWhiteSpace(verboseMessage)) verboseMessage = verboseMessage.Trim();
+            if (!(thread.IsNullOrWhiteSpace())) thread = thread.Trim();
+            if (!(message.IsNullOrWhiteSpace())) message = message.Trim();
+            if (!(verboseMessage.IsNullOrWhiteSpace())) verboseMessage = verboseMessage.Trim();
             ConsoleColor fgOriginal = Console.ForegroundColor;
             ConsoleColor bgOriginal = Console.BackgroundColor;
             try
@@ -185,17 +185,17 @@ namespace Emc.Documentum.Rest.Utility
         /// <param name="xmlMessage"></param>
         public void WriteToServiceTransactionLog(string thread, string action, string description, string xmlMessage)
         {
-            if (string.IsNullOrWhiteSpace(action))
+            if ((action.IsNullOrWhiteSpace()))
                 throw new ArgumentException("The action parameter cannot be null or whitespace.");
-            if (string.IsNullOrWhiteSpace(description))
+            if ((description.IsNullOrWhiteSpace()))
                 throw new ArgumentException("The description parameter cannot be null or whitespace.");
-            if (string.IsNullOrWhiteSpace(xmlMessage))
+            if ((xmlMessage.IsNullOrWhiteSpace()))
                 throw new ArgumentException("The xmlMessage parameter cannot be null or whitespace.");
 
-            if (!string.IsNullOrWhiteSpace(thread)) thread = thread.Trim();
-            if (!string.IsNullOrWhiteSpace(action)) action = action.Trim();
-            if (!string.IsNullOrWhiteSpace(description)) description = description.Trim();
-            if (!string.IsNullOrWhiteSpace(xmlMessage)) xmlMessage = xmlMessage.Trim();
+            if (!(thread.IsNullOrWhiteSpace())) thread = thread.Trim();
+            if (!(action.IsNullOrWhiteSpace())) action = action.Trim();
+            if (!(description.IsNullOrWhiteSpace())) description = description.Trim();
+            if (!(xmlMessage.IsNullOrWhiteSpace())) xmlMessage = xmlMessage.Trim();
 
             const int maxLength = 255;
             if (action.Length > maxLength) action = action.Substring(0, maxLength);
@@ -232,8 +232,8 @@ namespace Emc.Documentum.Rest.Utility
         internal string ConvertXmlToString(string xml)
         {
             var xmlString = string.Empty;
-            if (!string.IsNullOrWhiteSpace(xml))
-                xmlString = WebUtility.HtmlEncode(xml); 
+            if (!(xml.IsNullOrWhiteSpace()))
+                xmlString = HttpUtility.HtmlEncode(xml); 
             return xmlString;
         }
 
@@ -241,7 +241,7 @@ namespace Emc.Documentum.Rest.Utility
         {
             const int maxLength = 31000;
 
-            if (string.IsNullOrWhiteSpace(message)) message = "Message parameter was null or whitespace";
+            if ((message.IsNullOrWhiteSpace())) message = "Message parameter was null or whitespace";
 
             var sb = new StringBuilder();
             sb.AppendFormat("Process: [{0}]{1}", process, System.Environment.NewLine);

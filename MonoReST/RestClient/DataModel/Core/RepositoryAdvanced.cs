@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 using System.Net.Http;
 using System.IO;
 using System.IO.Compression;
+using Ionic.Zip;
 
 namespace Emc.Documentum.Rest.DataModel
 {
@@ -704,11 +705,10 @@ namespace Emc.Documentum.Rest.DataModel
         /// <param name="zipArchive"></param>
         public void AddFileToZipArchive(FileInfo fileToZip, string pathInZip, FileInfo zipArchive)
         {
-            //Create Empty Archive
-            using (ZipArchive archive = ZipFile.Open(zipArchive.FullName, ZipArchiveMode.Update))
+            using (var zip = ZipFile.Read(zipArchive.FullName))
             {
-                ZipArchiveEntry FileInArchive = archive.CreateEntry(pathInZip);
-                ZipArchiveEntry zippedFile = archive.CreateEntryFromFile(fileToZip.FullName, pathInZip);
+                zip.AddFile(fileToZip.FullName, pathInZip);
+                zip.Save();
             }
         }
 

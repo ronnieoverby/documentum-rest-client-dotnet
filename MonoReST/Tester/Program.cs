@@ -82,6 +82,7 @@ namespace Emc.Documentum.Rest.Test
                             pause = cmd.IsNextBool() ? cmd.NextBool() : false;
                             filter = cmd.Next();
                             string userName = cmd.ReadToEnd();
+                            //D:\Code\documentum-rest-client-dotnet\MonoReST\Tester\Tests\UserTest.cs
                             UserTest.Run(client, RestHomeUri, filter, itemsPerPage, pause, repositoryName, printResult, userName);
                             break;
                         case "group":

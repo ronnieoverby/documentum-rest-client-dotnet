@@ -85,8 +85,8 @@ namespace Emc.Documentum.Rest.DataModel
             builder.AppendFormat(
                 "Resource{{href: {0}, hints_allow: {1}, hints_representations: {2}}}",
                 this.Href,
-                string.Join(", ", this.Hints.Allow),
-                string.Join(", ", this.Hints.Representations));
+                string.Join(", ", this.Hints.Allow.ToArray()),
+                string.Join(", ", this.Hints.Representations.ToArray()));
             return builder.ToString();
         }
 

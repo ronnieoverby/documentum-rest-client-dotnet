@@ -93,7 +93,7 @@ namespace Emc.Documentum.Rest.Net
         public RestController(string userName, string password)
         {
             // Default of 5 minutes for a http response timeout.
-            if ( String.IsNullOrWhiteSpace(userName) || (password == null))
+            if (userName.IsNullOrWhiteSpace() || (password == null))
             {
                 throw new ArgumentNullException("Username and password are required for basic authentication.");
             } else InitClient(userName, password, 5);
